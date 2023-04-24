@@ -6,8 +6,16 @@ is_prod = os.environ.get('GITHUB_REF_NAME') == 'master'
 prefix = 'prod' if is_prod else 'dev'
 task_def = {
     "family": f"{prefix}_eth_staker",
-    "requiresCompatibilities": [
-        "EC2"
+    "requiresCompatibilities": ["EC2"],
+    "placementConstraints": [
+        {
+            "type": "memberOf",
+            "expression": "attribute:ecs.os-type == linux"
+        },
+        {
+            "type": "memberOf",
+            "expression": "attribute:ecs.instance-type == a1.large"
+        }
     ],
     "containerDefinitions": [
         {
