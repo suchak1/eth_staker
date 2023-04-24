@@ -14,6 +14,7 @@ task_def = {
         },
         {
             "type": "memberOf",
+            # CHANGE INSTANCE TYPE TO ONE WITH HIGH CPU, MEMORY, SSD, and BANDWIDTH
             "expression": "attribute:ecs.instance-type == a1.large"
         }
     ],
@@ -28,7 +29,9 @@ task_def = {
                     "awslogs-create-group": "true",
                     "awslogs-stream-prefix": f"{prefix}_eth_staker"
                 }
-            }
+            },
+            # CHANGE THIS TO CORRESPOND WITH INSTANCE TYPE
+            "memory": 3000
         }
     ]
 }
