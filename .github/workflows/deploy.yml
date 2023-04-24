@@ -15,6 +15,11 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+      
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -38,6 +43,9 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
+      # Generate task definition
+      - run: python3 gen_task_def.py
+
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
@@ -50,6 +58,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: my-service
-          cluster: my-cluster
+          service: ${{ fromJSON('["dev_staking_service", "prod_staking_service"]')[github.ref_name == 'master'] }}
+          cluster: ${{ fromJSON('["dev_staking_cluster", "prod_staking_cluster"]')[github.ref_name == 'master'] }}
           wait-for-service-stability: true
