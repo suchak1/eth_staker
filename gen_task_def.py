@@ -11,10 +11,11 @@ task_def = {
     ],
     "containerDefinitions": [
         {
+            "name": f"{prefix}_staking_container",
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": f"{prefix}_eth_staker-container",
+                    "awslogs-group": f"{prefix}_staking_container",
                     "awslogs-region": "us-east-1",
                     "awslogs-create-group": "true",
                     "awslogs-stream-prefix": f"{prefix}_eth_staker"
