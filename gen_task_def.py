@@ -31,7 +31,9 @@ task_def = {
                 }
             },
             # CHANGE THIS TO CORRESPOND WITH INSTANCE TYPE
-            "memory": 3000
+            "memory": 3000,
+            "interactive": True,
+            "pseudoTerminal": True
         }
     ]
 }
