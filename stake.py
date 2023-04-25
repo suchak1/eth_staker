@@ -3,9 +3,15 @@ import subprocess
 
 deploy_env = os.environ['DEPLOY_ENV']
 
-args = "--mainnet"
+args_list = []
 if deploy_env == 'dev':
-    args = "--goerli"
+    args_list.append("--goerli")
+else:
+    args_list.append("--mainnet")
+
+default_args = ['--http', '--http.api', 'eth,net,engine,admin']
+
+args = " ".join(args_list + default_args)
 
 
 def run_execution():
