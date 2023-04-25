@@ -7,6 +7,7 @@ RUN apt-get update
 RUN apt-get install -y software-properties-common
 RUN add-apt-repository -y ppa:ethereum/ethereum
 RUN apt-get install -y ethereum
+COPY loop.py .
 ENTRYPOINT python3 loop.py
 
 
