@@ -59,6 +59,6 @@ jobs:
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           # don't use this?
-          # service: ${{ fromJSON('["dev_staking_service", "prod_staking_service"]')[github.ref_name == 'master'] }}
+          service: ${{ fromJSON('["dev_staking_service", "prod_staking_service"]')[github.ref_name == 'master'] }}
           cluster: ${{ fromJSON('["dev-staking-cluster2", "prod-staking-cluster"]')[github.ref_name == 'master'] }}
           wait-for-service-stability: true
