@@ -16,7 +16,7 @@ RUN apt-get install -y ethereum
 
 # Run app
 # ENTRYPOINT geth --goerli
-# COPY loop.py .
+COPY stake.py .
 # ARG NETWORK 
 # CMD python3 "$(if [ $DEPLOY_ENV = 'dev' ] ; then echo 'loop.py' ; else echo 'failed'; fi)"
 ENTRYPOINT python3 stake.py
