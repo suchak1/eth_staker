@@ -6,6 +6,8 @@ is_prod = os.environ.get('GITHUB_REF_NAME') == 'master'
 prefix = 'prod' if is_prod else 'dev'
 task_def = {
     "family": f"{prefix}_eth_staker",
+    "status": "ACTIVE",
+    "networkMode": "awsvpc",
     "requiresCompatibilities": ["EC2"],
     "placementConstraints": [
         {
@@ -21,6 +23,7 @@ task_def = {
     "containerDefinitions": [
         {
             "name": f"{prefix}_staking_container",
+            "image": f"092475342352.dkr.ecr.us-east-1.amazonaws.com/{prefix}_eth_staker",
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
