@@ -21,6 +21,7 @@ task_def = {
     ],
     "containerDefinitions": [
         {
+            "executionRoleArn": "arn:aws:iam::092475342352:role/ecsTaskExecutionRole",
             "name": f"{prefix}_staking_container",
             "image": f"092475342352.dkr.ecr.us-east-1.amazonaws.com/{prefix}_eth_staker",
             "logConfiguration": {
