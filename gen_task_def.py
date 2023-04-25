@@ -15,7 +15,7 @@ task_def = {
         {
             "type": "memberOf",
             # CHANGE INSTANCE TYPE TO ONE WITH HIGH CPU, MEMORY, SSD, and BANDWIDTH
-            "expression": "attribute:ecs.instance-type == a1.large"
+            "expression": "attribute:ecs.instance-type == t3.micro"
         }
     ],
     "containerDefinitions": [
@@ -31,7 +31,7 @@ task_def = {
                 }
             },
             # CHANGE THIS TO CORRESPOND WITH INSTANCE TYPE
-            "memory": 3000,
+            "memory": 512,
             "interactive": True,
             "pseudoTerminal": True
         }
