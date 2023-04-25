@@ -5,6 +5,7 @@ import json
 is_prod = os.environ.get('GITHUB_REF_NAME') == 'master'
 prefix = 'prod' if is_prod else 'dev'
 task_def = {
+    "executionRoleArn": "arn:aws:iam::092475342352:role/ecsTaskExecutionRole",
     "family": f"{prefix}_eth_staker",
     # "networkMode": "awsvpc",
     "requiresCompatibilities": ["EC2"],
@@ -21,7 +22,6 @@ task_def = {
     ],
     "containerDefinitions": [
         {
-            "executionRoleArn": "arn:aws:iam::092475342352:role/ecsTaskExecutionRole",
             "name": f"{prefix}_staking_container",
             "image": f"092475342352.dkr.ecr.us-east-1.amazonaws.com/{prefix}_eth_staker",
             "logConfiguration": {
