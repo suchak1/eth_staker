@@ -6,8 +6,7 @@ is_prod = os.environ.get('GITHUB_REF_NAME') == 'master'
 prefix = 'prod' if is_prod else 'dev'
 task_def = {
     "family": f"{prefix}_eth_staker",
-    "status": "ACTIVE",
-    "networkMode": "awsvpc",
+    # "networkMode": "awsvpc",
     "requiresCompatibilities": ["EC2"],
     "placementConstraints": [
         {
