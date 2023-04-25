@@ -11,7 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    env:
+      ACTIONS_STEP_DEBUG: true
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -61,4 +62,4 @@ jobs:
           # don't use this?
           service: ${{ fromJSON('["dev_staking_service", "prod_staking_service"]')[github.ref_name == 'master'] }}
           cluster: ${{ fromJSON('["dev-staking-cluster2", "prod-staking-cluster"]')[github.ref_name == 'master'] }}
-          wait-for-service-stability: true
+          wait-for-service-stability: false
