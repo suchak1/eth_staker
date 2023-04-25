@@ -65,16 +65,26 @@ task_def = {
             "name": "ecs.capability.task-eni"
         }
     ],
-    "placementConstraints": [],
+    "placementConstraints": [
+        {
+            "type": "memberOf",
+            "expression": "attribute:ecs.os-type == linux"
+        },
+        {
+            "type": "memberOf",
+            # CHANGE INSTANCE TYPE TO ONE WITH HIGH CPU, MEMORY, SSD, and BANDWIDTH
+            "expression": "attribute:ecs.instance-type == t3.micro"
+        }
+    ],
     "compatibilities": [
         "EC2",
-        "FARGATE"
+        # "FARGATE"
     ],
     "runtimePlatform": {
         "operatingSystemFamily": "LINUX"
     },
     "requiresCompatibilities": [
-        "FARGATE"
+        "EC2"
     ],
     "cpu": "256",
     "memory": "512",
