@@ -31,15 +31,17 @@ RUN mv bazel-bin/cmd/prysmctl/prysmctl_/prysmctl .
 # Mainnet hosts
 # https://beaconstate.ethstaker.cc
 # https://sync-mainnet.beaconcha.in
+
+# FIX THIS! not working properly with build-arg?
 RUN export NODE_HOST=$([[ "${DEPLOY_ENV}" == "dev" ]] && echo "https://goerli.beaconstate.ethstaker.cc" || echo "https://beaconstate.ethstaker.cc") && \
     ./prysmctl checkpoint-sync download --beacon-node-host="${NODE_HOST}"
 
-# # USE EC2
-# # Be able to SSH into instance to get info/data/files
-# # Upload/periodically backup important files to S3
-# # Choose snapshot to sync from quickly
-# # Download geth snapshot files during build
-# # Lock down node - follow security best practices
+# USE EC2
+# Be able to SSH into instance to get info/data/files
+# Use EBS for geth datadir
+# quit geth gracefully first, take EBS snapshot, restart geth
+# Make sure geth exits gracefully - parent process sends graceful kill signal to geth process
+# Lock down node - follow security best practices
 
 # # Run app
 # WORKDIR /ethereum
