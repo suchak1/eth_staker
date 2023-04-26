@@ -8,10 +8,10 @@ ENV DEPLOY_ENV "${DEPLOY_ENV}"
 ENV VERSION "${VERSION}"
 
 # Install geth (execution)
-RUN apt-get update
-RUN apt-get install -y python3 software-properties-common git golang-go nodejs npm
-RUN add-apt-repository -y ppa:ethereum/ethereum
-RUN apt-get install -y ethereum
+RUN apt-get update && \
+    apt-get install -y python3 software-properties-common git golang-go nodejs npm && \
+    add-apt-repository -y ppa:ethereum/ethereum && \
+    apt-get install -y ethereum
 
 # Install prysm (consensus)
 RUN mkdir -p /ethereum/consensus/prysm /ethereum/execution
