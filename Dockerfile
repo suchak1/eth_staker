@@ -1,5 +1,5 @@
 # Base image
-FROM ubuntu
+FROM ubuntu:23.04
 
 # Configure env vars
 ARG DEPLOY_ENV
@@ -9,29 +9,39 @@ ENV VERSION "${VERSION}"
 
 # Install geth (execution)
 RUN apt-get update
-RUN apt-get install -y python3
-RUN apt-get install -y software-properties-common
+RUN apt-get install -y python3 software-properties-common git golang-go nodejs npm
 RUN add-apt-repository -y ppa:ethereum/ethereum
 RUN apt-get install -y ethereum
 
 # Install prysm (consensus)
-RUN mkdir -p ethereum/consensus/prysm ethereum/execution
-WORKDIR ethereum/consensus/prysm
-RUN curl https://raw.githubusercontent.com/prysmaticlabs/prysm/master/prysm.sh --output prysm.sh && chmod +x prysm.sh
+RUN mkdir -p /ethereum/consensus/prysm /ethereum/execution
+WORKDIR /ethereum/consensus
+RUN git clone https://github.com/prysmaticlabs/prysm.git
+WORKDIR /ethereum/consensus/prysm
+RUN chmod +x prysm.sh
 
-# USE IPC!! bc same computer
-# USE EC2
-# Be able to SSH into instance to get info/data/files
-# Upload/periodically backup important files to S3
-# Choose snapshot to sync from quickly
-# Download snapshot files during build
-# https://goerli.beaconstate.ethstaker.cc/
-# https://sync-goerli.beaconcha.in/
+# Download consensus snapshot
+RUN npm i -g @bazel/bazelisk
+RUN bazel build //cmd/prysmctl --config=release
+RUN mv bazel-bin/cmd/prysmctl/prysmctl_/prysmctl .
+# Goerli hosts
+# https://goerli.beaconstate.ethstaker.cc
+# https://sync-goerli.beaconcha.in
 
-# https://beaconstate.ethstaker.cc/
-# https://sync-mainnet.beaconcha.in/
-# Lock down node - follow security best practices
+# Mainnet hosts
+# https://beaconstate.ethstaker.cc
+# https://sync-mainnet.beaconcha.in
+RUN export NODE_HOST=$([[ "${DEPLOY_ENV}" == "dev" ]] && echo "https://goerli.beaconstate.ethstaker.cc" || echo "https://beaconstate.ethstaker.cc") && \
+    ./prysmctl checkpoint-sync download --beacon-node-host="${NODE_HOST}"
 
-# Run app
-COPY stake.py .
-ENTRYPOINT python3 stake.py
+# # USE EC2
+# # Be able to SSH into instance to get info/data/files
+# # Upload/periodically backup important files to S3
+# # Choose snapshot to sync from quickly
+# # Download geth snapshot files during build
+# # Lock down node - follow security best practices
+
+# # Run app
+# WORKDIR /ethereum
+# COPY stake.py .
+# ENTRYPOINT python3 stake.py

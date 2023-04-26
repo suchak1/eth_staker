@@ -1,25 +1,64 @@
 import os
+import sys
 import subprocess
 
 deploy_env = os.environ['DEPLOY_ENV']
 
-args_list = []
-if deploy_env == 'dev':
-    args_list.append("--goerli")
-else:
-    args_list.append("--mainnet")
 
-default_args = ['--http', '--http.api', 'eth,net,engine,admin']
+home_dir = os.path.expanduser("~")
 
-args = " ".join(args_list + default_args)
+platform = sys.platform.lower()
+
+
+ipc_prefix = f"{home_dir}/{'Library/Ethereum' if platform == 'darwin' else '.ethereum'}"
+ipc_postfix = f"{'/goerli' if deploy_env == 'dev' else ''}/geth.ipc"
+ipc_path = ipc_prefix + ipc_postfix
 
 
 def run_execution():
-    proc = subprocess.Popen(f'geth {args}', shell=True,
-                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    args_list = []
+
+    if deploy_env == 'dev':
+        args_list.append("--goerli")
+    else:
+        args_list.append("--mainnet")
+
+    default_args = ['--http', '--http.api', 'eth,net,engine,admin']
+    args = " ".join(args_list + default_args)
+    proc = subprocess.Popen(
+        f'cd execution && geth {args}',
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT
+    )
     for line in iter(proc.stdout.readline, b''):
-        print(">>> " + line.decode('UTF-8').strip())
+        print(">>>EXECUTION<<< " + line.decode('UTF-8').strip())
     retval = proc.wait()
+
+
+def run_consensus():
+    args_list = [
+        '--accept-terms-of-use',
+        f'--execution-endpoint={ipc_path}'
+    ]
+
+    if deploy_env == 'dev':
+        args_list.append("--prater")
+        args.list.append("--genesis-state=genesis.ssz")
+
+    default_args = ['--suggested-fee-recipient=ETH_WALLET_ADDR_HERE!']
+    args = " ".join(args_list + default_args)
+    proc = subprocess.Popen(
+        f'cd consensus && ./prysm.sh beacon-chain {args}',
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT
+    )
+    for line in iter(proc.stdout.readline, b''):
+        print(">>>CONSENSUS<<< " + line.decode('UTF-8').strip())
+    retval = proc.wait()
+
+# after 1 hour of uptime, save snapshot to s3
 
 
 run_execution()
