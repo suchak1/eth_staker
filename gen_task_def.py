@@ -68,16 +68,15 @@ task_def = {
     "placementConstraints": [],
     "compatibilities": [
         "EC2",
-        "FARGATE"
     ],
     "runtimePlatform": {
         "operatingSystemFamily": "LINUX"
     },
     "requiresCompatibilities": [
-        "FARGATE"
+        "EC2"
     ],
     "cpu": "256",
-    "memory": "512",
+    "memory": "32768",
     "registeredAt": "2023-04-25T09:38:41.227000-04:00",
     "registeredBy": "arn:aws:iam::092475342352:root"
 }

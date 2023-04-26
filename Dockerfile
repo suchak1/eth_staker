@@ -41,6 +41,7 @@ RUN export NODE_HOST=$([[ "${DEPLOY_ENV}" == "dev" ]] && echo "https://goerli.be
 # Use EBS for geth datadir
 # quit geth gracefully first, take EBS snapshot, restart geth
 # Make sure geth exits gracefully - parent process sends graceful kill signal to geth process
+# Get block and state filename and use as args for prysm beacon chain cmd
 # Lock down node - follow security best practices
 
 # # Run app
