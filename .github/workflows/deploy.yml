@@ -45,6 +45,7 @@ jobs:
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
             --build-arg DEPLOY_ENV=${DEPLOY_ENV} \
             --build-arg VERSION=${IMAGE_TAG} \
+            --platform linux/arm64
             .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT

@@ -45,6 +45,6 @@ RUN export NODE_HOST=$([[ "${DEPLOY_ENV}" == "dev" ]] && echo "https://goerli.be
 # Lock down node - follow security best practices
 
 # # Run app
-# WORKDIR /ethereum
-# COPY stake.py .
-# ENTRYPOINT python3 stake.py
+WORKDIR /ethereum
+COPY stake.py .
+ENTRYPOINT python3 stake.py
