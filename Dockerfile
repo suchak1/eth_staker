@@ -21,7 +21,7 @@ RUN curl -LO "https://gethstore.blob.core.windows.net/builds/${GETH_ARCHIVE}.tar
 RUN tar -xvzf "${GETH_ARCHIVE}.tar.gz"
 RUN mv ${GETH_ARCHIVE}/geth . && rm -rf ${GETH_ARCHIVE}
 
-RUN chmod +x beacon-chain validator prysmctl
+RUN chmod +x geth
 
 # Download prysm (consensus)
 RUN mkdir -p /ethereum/consensus/prysm
