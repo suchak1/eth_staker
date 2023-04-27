@@ -21,6 +21,8 @@ RUN curl -LO "https://gethstore.blob.core.windows.net/builds/${GETH_ARCHIVE}.tar
 RUN tar -xvzf "${GETH_ARCHIVE}.tar.gz"
 RUN mv ${GETH_ARCHIVE}/geth . && rm -rf ${GETH_ARCHIVE}
 
+RUN chmod +x beacon-chain validator prysmctl
+
 # Download prysm (consensus)
 RUN mkdir -p /ethereum/consensus/prysm
 WORKDIR /ethereum/consensus/prysm
@@ -28,6 +30,8 @@ ENV PRYSM_VERSION v4.0.3
 RUN curl -Lo beacon-chain "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/beacon-chain-${PRYSM_VERSION}-${ARCH}"
 RUN curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/validator-${PRYSM_VERSION}-${ARCH}"
 RUN curl -Lo prysmctl "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/prysmctl-${PRYSM_VERSION}-${ARCH}"
+
+RUN chmod +x beacon-chain validator prysmctl
 
 # Download consensus snapshot
 # Goerli hosts
