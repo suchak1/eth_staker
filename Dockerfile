@@ -16,9 +16,10 @@ RUN mkdir -p /ethereum/execution
 WORKDIR /ethereum/execution
 ENV ARCH linux-amd64
 ENV GETH_VERSION 1.11.6-ea9e62ca
-RUN curl -Lo geth-linux.tar.gz "https://gethstore.blob.core.windows.net/builds/geth-${ARCH}-${GETH_VERSION}.tar.gz"
-RUN tar -xvzf geth-linux.tar.gz
-RUN mv geth-linux/geth . && rm -rf geth-linux
+ENV GETH_ARCHIVE "geth-${ARCH}-${GETH_VERSION}"
+RUN curl -LO "https://gethstore.blob.core.windows.net/builds/${GETH_ARCHIVE}.tar.gz"
+RUN tar -xvzf "${GETH_ARCHIVE}.tar.gz"
+RUN mv ${GETH_ARCHIVE}/geth . && rm -rf ${GETH_ARCHIVE}
 
 # Download prysm (consensus)
 RUN mkdir -p /ethereum/consensus/prysm
