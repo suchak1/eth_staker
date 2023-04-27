@@ -41,7 +41,7 @@ jobs:
           DEPLOY_ENV: ${{ fromJSON('["dev", "prod"]')[github.ref_name == 'master'] }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker buildx build \
+          docker build \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
             --build-arg DEPLOY_ENV=${DEPLOY_ENV} \
             --build-arg VERSION=${IMAGE_TAG} \
