@@ -9,8 +9,7 @@ ENV VERSION "${VERSION}"
 
 # Install deps
 RUN apk update && \
-    apk add --no-cache python3 git
-
+    apk add --no-cache python3 git curl
 
 # Download geth (execution)
 RUN mkdir -p /ethereum/execution
