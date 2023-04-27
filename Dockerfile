@@ -43,7 +43,7 @@ RUN chmod +x beacon-chain validator prysmctl
 # https://sync-mainnet.beaconcha.in
 
 # FIX THIS! not working properly with build-arg?
-RUN export NODE_HOST=$([[ "${DEPLOY_ENV}" == "dev" ]] && echo "https://goerli.beaconstate.ethstaker.cc" || echo "https://beaconstate.ethstaker.cc") && ./prysmctl checkpoint-sync download --beacon-node-host="${NODE_HOST}"
+RUN export NODE_HOST=$([[ "${DEPLOY_ENV}" == "dev" ]] && echo "https://goerli.beaconstate.ethstaker.cc" || echo "https://beaconstate.ethstaker.cc") && bash ./prysmctl checkpoint-sync download --beacon-node-host="${NODE_HOST}"
 
 # Use EBS for geth datadir
 # quit geth gracefully first, take EBS snapshot, restart geth
