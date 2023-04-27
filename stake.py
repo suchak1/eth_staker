@@ -26,7 +26,7 @@ def run_execution():
     default_args = ['--http', '--http.api', 'eth,net,engine,admin']
     args = " ".join(args_list + default_args)
     proc = subprocess.Popen(
-        f'cd execution && geth {args}',
+        f'cd execution && ./geth {args}',
         shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT

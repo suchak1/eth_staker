@@ -7,18 +7,27 @@ ARG VERSION
 ENV DEPLOY_ENV "${DEPLOY_ENV}"
 ENV VERSION "${VERSION}"
 
-# Install geth (execution)
+# Install deps
 RUN apk update && \
-    apk add --no-cache python3 git geth=1.11.5-r0
+    apk add --no-cache python3 git
 
-# Install prysm (consensus)
-RUN mkdir -p /ethereum/consensus/prysm /ethereum/execution
+
+# Download geth (execution)
+RUN mkdir -p /ethereum/execution
+WORKDIR /ethereum/execution
+ENV ARCH linux-amd64
+ENV GETH_VERSION 1.11.6-ea9e62ca
+RUN curl -Lo geth-linux.tar.gz "https://gethstore.blob.core.windows.net/builds/geth-${ARCH}-${GETH_VERSION}.tar.gz"
+RUN tar -xvzf geth-linux.tar.gz
+RUN mv geth-linux/geth . && rm -rf geth-linux
+
+# Download prysm (consensus)
+RUN mkdir -p /ethereum/consensus/prysm
 WORKDIR /ethereum/consensus/prysm
 ENV PRYSM_VERSION v4.0.3
-ENV PRYSM_ARCH linux-amd64
-RUN curl -Lo beacon-chain "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/beacon-chain-${PRYSM_VERSION}-${PRYSM_ARCH}"
-RUN curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/validator-${PRYSM_VERSION}-${PRYSM_ARCH}"
-RUN curl -Lo prysmctl "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/prysmctl-${PRYSM_VERSION}-${PRYSM_ARCH}"
+RUN curl -Lo beacon-chain "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/beacon-chain-${PRYSM_VERSION}-${ARCH}"
+RUN curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/validator-${PRYSM_VERSION}-${ARCH}"
+RUN curl -Lo prysmctl "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/prysmctl-${PRYSM_VERSION}-${ARCH}"
 
 # Download consensus snapshot
 # Goerli hosts
