@@ -32,28 +32,19 @@ RUN chmod +x geth
 RUN mkdir -p "${PRYSM_DIR}"
 WORKDIR "${PRYSM_DIR}"
 ENV PRYSM_VERSION v4.0.3
-# RUN curl -Lo beacon-chain "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/beacon-chain-${PRYSM_VERSION}-${ARCH}"
-# RUN curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/validator-${PRYSM_VERSION}-${ARCH}"
+RUN curl -Lo beacon-chain "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/beacon-chain-${PRYSM_VERSION}-${ARCH}"
+RUN curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/validator-${PRYSM_VERSION}-${ARCH}"
 RUN curl -Lo prysmctl "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/prysmctl-${PRYSM_VERSION}-${ARCH}"
 
-RUN chmod +x prysmctl
-# RUN chmod +x beacon-chain validator prysmctl
+RUN chmod +x beacon-chain validator prysmctl
 
 # Download consensus snapshot
-# # FIX THIS! not working properly with build-arg?
-# RUN /bin/bash -c "export NODE_HOST=$([[ {DEPLOY_ENV} == dev ]] && echo https://goerli.beaconstate.ethstaker.cc || echo https://beaconstate.ethstaker.cc)"
-# RUN export NODE_HOST=$([[ "${DEPLOY_ENV}" == "dev" ]] && echo "https://goerli.beaconstate.ethstaker.cc" || echo "https://beaconstate.ethstaker.cc") && bash ./prysmctl checkpoint-sync download --beacon-node-host="${NODE_HOST}"
-# export NODE_HOST=$([[ "${DEPLOY_ENV}" == "dev" ]] && echo "https://goerli.beaconstate.ethstaker.cc" || echo "https://beaconstate.ethstaker.cc") && ./prysmctl checkpoint-sync download --beacon-node-host="${NODE_HOST}"
-
-# /bin/bash -c "export NODE_HOST=$([[ \"${DEPLOY_ENV}\" == dev ]] && echo \"https://goerli.beaconstate.ethstaker.cc\" || echo \"https://beaconstate.ethstaker.cc\") && echo ${NODE_HOST}"
-# /bin/bash -c "export NODE_HOST=$(if [[ \"${DEPLOY_ENV}\" == dev ]]; then echo \"https://goerli.beaconstate.ethstaker.cc\"; else echo \"https://beaconstate.ethstaker.cc\"; fi) && echo ${NODE_HOST}"
 COPY "${PRYSM_DIR}/download_checkpoint.sh" .
 RUN bash download_checkpoint.sh
 
 # Use EBS for geth datadir
 # quit geth gracefully first, take EBS snapshot, restart geth
 # Make sure geth exits gracefully - parent process sends graceful kill signal to geth process
-# Get block and state filename and use as args for prysm beacon chain cmd
 # Lock down node - follow security best practices
 # Make sure node can access peers - modify security group? modify docker container networking?
 
@@ -63,8 +54,6 @@ RUN bash download_checkpoint.sh
 # Use cloudformation to create and update stack - test with second develop cluster
 # Enable EBS optimized instance. Check w this cmd
 # aws ec2 describe-instance-attribute --attribute=ebsOptimized --instance-id=i-0be569150d6046db6
-
-# Use alpine image to decrease size
 
 # Run app
 WORKDIR "${ETH_DIR}"
