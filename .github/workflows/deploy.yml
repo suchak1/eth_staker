@@ -53,7 +53,7 @@ jobs:
       # aws cloudformation update-stack --stack-name EC2ContainerService-dev-staking-cluster --template-body file://template.yaml --parameters file://dev-parameters.json
 
       # Generate task definition
-      - run: python3 gen_task_def.py
+      - run: python3 scripts/gen_task_def.py
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def

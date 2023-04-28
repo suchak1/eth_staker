@@ -11,7 +11,7 @@ ENV VERSION "${VERSION}"
 RUN apt-get update && \
     apt-get install -y python3 git curl bash
 
-# Download geth (execution)
+# # Download geth (execution)
 RUN mkdir -p /ethereum/execution
 WORKDIR /ethereum/execution
 ENV ARCH linux-amd64
@@ -28,24 +28,22 @@ RUN chmod +x geth
 RUN mkdir -p /ethereum/consensus/prysm
 WORKDIR /ethereum/consensus/prysm
 ENV PRYSM_VERSION v4.0.3
-RUN curl -Lo beacon-chain "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/beacon-chain-${PRYSM_VERSION}-${ARCH}"
-RUN curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/validator-${PRYSM_VERSION}-${ARCH}"
+# RUN curl -Lo beacon-chain "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/beacon-chain-${PRYSM_VERSION}-${ARCH}"
+# RUN curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/validator-${PRYSM_VERSION}-${ARCH}"
 RUN curl -Lo prysmctl "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/prysmctl-${PRYSM_VERSION}-${ARCH}"
 
-# RUN chmod +x prysmctl
-RUN chmod +x beacon-chain validator prysmctl
+RUN chmod +x prysmctl
+# RUN chmod +x beacon-chain validator prysmctl
 
 # Download consensus snapshot
-# Goerli hosts
-# https://goerli.beaconstate.ethstaker.cc
-# https://sync-goerli.beaconcha.in
+# # FIX THIS! not working properly with build-arg?
+# RUN /bin/bash -c "export NODE_HOST=$([[ {DEPLOY_ENV} == dev ]] && echo https://goerli.beaconstate.ethstaker.cc || echo https://beaconstate.ethstaker.cc)"
+# RUN export NODE_HOST=$([[ "${DEPLOY_ENV}" == "dev" ]] && echo "https://goerli.beaconstate.ethstaker.cc" || echo "https://beaconstate.ethstaker.cc") && bash ./prysmctl checkpoint-sync download --beacon-node-host="${NODE_HOST}"
+# export NODE_HOST=$([[ "${DEPLOY_ENV}" == "dev" ]] && echo "https://goerli.beaconstate.ethstaker.cc" || echo "https://beaconstate.ethstaker.cc") && ./prysmctl checkpoint-sync download --beacon-node-host="${NODE_HOST}"
 
-# Mainnet hosts
-# https://beaconstate.ethstaker.cc
-# https://sync-mainnet.beaconcha.in
-
-# # # FIX THIS! not working properly with build-arg?
-RUN export NODE_HOST=$([[ "${DEPLOY_ENV}" == "dev" ]] && echo "https://goerli.beaconstate.ethstaker.cc" || echo "https://beaconstate.ethstaker.cc") && bash ./prysmctl checkpoint-sync download --beacon-node-host="${NODE_HOST}"
+# /bin/bash -c "export NODE_HOST=$([[ \"${DEPLOY_ENV}\" == dev ]] && echo \"https://goerli.beaconstate.ethstaker.cc\" || echo \"https://beaconstate.ethstaker.cc\") && echo ${NODE_HOST}"
+# /bin/bash -c "export NODE_HOST=$(if [[ \"${DEPLOY_ENV}\" == dev ]]; then echo \"https://goerli.beaconstate.ethstaker.cc\"; else echo \"https://beaconstate.ethstaker.cc\"; fi) && echo ${NODE_HOST}"
+RUN bash scripts/download_checkpoint.sh
 
 # Use EBS for geth datadir
 # quit geth gracefully first, take EBS snapshot, restart geth
