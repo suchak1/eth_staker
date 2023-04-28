@@ -6,27 +6,31 @@ ARG DEPLOY_ENV
 ARG VERSION
 ENV DEPLOY_ENV "${DEPLOY_ENV}"
 ENV VERSION "${VERSION}"
+ENV ETH_DIR "${HOME}/ethereum"
+ENV EXEC_DIR "${ETH_DIR}/execution"
+ENV CONS_DIR "${ETH_DIR}/consensus"
+ENV PRYSM_DIR "${CONS_DIR}/prysm"
 
 # Install deps
 RUN apt-get update && \
     apt-get install -y python3 git curl bash
 
 # # Download geth (execution)
-RUN mkdir -p /ethereum/execution
-WORKDIR /ethereum/execution
+RUN mkdir -p "${EXEC_DIR}"
+WORKDIR "${EXEC_DIR}"
 ENV ARCH linux-amd64
 # ENV ARCH linux-arm64
 ENV GETH_VERSION 1.11.6-ea9e62ca
 ENV GETH_ARCHIVE "geth-${ARCH}-${GETH_VERSION}"
 RUN curl -LO "https://gethstore.blob.core.windows.net/builds/${GETH_ARCHIVE}.tar.gz"
 RUN tar -xvzf "${GETH_ARCHIVE}.tar.gz"
-RUN mv ${GETH_ARCHIVE}/geth . && rm -rf ${GETH_ARCHIVE}
+RUN mv "${GETH_ARCHIVE}/geth" . && rm -rf "${GETH_ARCHIVE}"
 
 RUN chmod +x geth
 
 # Download prysm (consensus)
-RUN mkdir -p /ethereum/consensus/prysm
-WORKDIR /ethereum/consensus/prysm
+RUN mkdir -p "${PRYSM_DIR}"
+WORKDIR "${PRYSM_DIR}"
 ENV PRYSM_VERSION v4.0.3
 # RUN curl -Lo beacon-chain "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/beacon-chain-${PRYSM_VERSION}-${ARCH}"
 # RUN curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/validator-${PRYSM_VERSION}-${ARCH}"
@@ -43,6 +47,8 @@ RUN chmod +x prysmctl
 
 # /bin/bash -c "export NODE_HOST=$([[ \"${DEPLOY_ENV}\" == dev ]] && echo \"https://goerli.beaconstate.ethstaker.cc\" || echo \"https://beaconstate.ethstaker.cc\") && echo ${NODE_HOST}"
 # /bin/bash -c "export NODE_HOST=$(if [[ \"${DEPLOY_ENV}\" == dev ]]; then echo \"https://goerli.beaconstate.ethstaker.cc\"; else echo \"https://beaconstate.ethstaker.cc\"; fi) && echo ${NODE_HOST}"
+WORKDIR "${ETH_DIR}"
+COPY scripts/download_checkpoint.sh .
 RUN bash scripts/download_checkpoint.sh
 
 # Use EBS for geth datadir
@@ -62,6 +68,5 @@ RUN bash scripts/download_checkpoint.sh
 # Use alpine image to decrease size
 
 # Run app
-WORKDIR /ethereum
 COPY stake.py .
 ENTRYPOINT python3 stake.py
