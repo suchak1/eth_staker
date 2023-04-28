@@ -47,8 +47,7 @@ RUN chmod +x prysmctl
 
 # /bin/bash -c "export NODE_HOST=$([[ \"${DEPLOY_ENV}\" == dev ]] && echo \"https://goerli.beaconstate.ethstaker.cc\" || echo \"https://beaconstate.ethstaker.cc\") && echo ${NODE_HOST}"
 # /bin/bash -c "export NODE_HOST=$(if [[ \"${DEPLOY_ENV}\" == dev ]]; then echo \"https://goerli.beaconstate.ethstaker.cc\"; else echo \"https://beaconstate.ethstaker.cc\"; fi) && echo ${NODE_HOST}"
-WORKDIR "${ETH_DIR}"
-COPY scripts/download_checkpoint.sh .
+COPY "${PRYSM_DIR}/download_checkpoint.sh" .
 RUN bash download_checkpoint.sh
 
 # Use EBS for geth datadir
@@ -68,5 +67,6 @@ RUN bash download_checkpoint.sh
 # Use alpine image to decrease size
 
 # Run app
+WORKDIR "${ETH_DIR}"
 COPY stake.py .
 ENTRYPOINT python3 stake.py
