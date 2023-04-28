@@ -17,4 +17,4 @@ else
     NODE_HOST="https://beaconstate.ethstaker.cc"
 fi
 
-ethereum/consensus/prysm/prysmctl checkpoint-sync download --beacon-node-host="${NODE_HOST}"
+"${HOME}"/ethereum/consensus/prysm/prysmctl checkpoint-sync download --beacon-node-host="${NODE_HOST}"
