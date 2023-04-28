@@ -49,7 +49,7 @@ RUN chmod +x prysmctl
 # /bin/bash -c "export NODE_HOST=$(if [[ \"${DEPLOY_ENV}\" == dev ]]; then echo \"https://goerli.beaconstate.ethstaker.cc\"; else echo \"https://beaconstate.ethstaker.cc\"; fi) && echo ${NODE_HOST}"
 WORKDIR "${ETH_DIR}"
 COPY scripts/download_checkpoint.sh .
-RUN bash scripts/download_checkpoint.sh
+RUN bash download_checkpoint.sh
 
 # Use EBS for geth datadir
 # quit geth gracefully first, take EBS snapshot, restart geth
