@@ -135,28 +135,6 @@ Resources:
         - Default
       VPCZoneIdentifier: 
         - !Ref Subnet
-    #   VPCZoneIdentifier: !Ref Subnets
-    #   DesiredCapacity: !Ref ClusterSize
-    #   Tags:
-    #     - Key: Name
-    #       Value: !Sub ${EnvironmentName} ECS host
-    #       PropagateAtLaunch: true
-    # CreationPolicy:
-    #   ResourceSignal:
-    #     Timeout: PT15M
-    # UpdatePolicy:
-    #   AutoScalingRollingUpdate:
-    #     MinInstancesInService: 1
-    #     MaxBatchSize: 1
-    #     PauseTime: PT15M
-    #     SuspendProcesses:
-    #       - HealthCheck
-    #       - ReplaceUnhealthy
-    #       - AZRebalance
-    #       - AlarmNotification
-    #       - ScheduledActions
-    #     WaitOnResourceSignals: true
-
   # ECSLaunchConfiguration:
 
   # TRY DOING LAUNCH TEMPLATE INSTEAD
@@ -177,11 +155,11 @@ Resources:
     #       /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
     #       /usr/bin/enable-ec2-spot-hibernation
 
-  LaunchTemplate:  
+  LaunchTemplate:
+    DependsOn: SecurityGroup  
     Type: AWS::EC2::LaunchTemplate
     Properties: 
       LaunchTemplateData: 
-        LaunchTemplateData
         BlockDeviceMappings: 
           - BlockDeviceMapping
         CapacityReservationSpecification: 
@@ -192,7 +170,7 @@ Resources:
           CreditSpecification
         DisableApiStop: Boolean
         DisableApiTermination: Boolean
-        EbsOptimized: Boolean
+        EbsOptimized: true
         ElasticGpuSpecifications: 
           - ElasticGpuSpecification
         ElasticInferenceAccelerators: 
@@ -203,38 +181,38 @@ Resources:
           HibernationOptions
         IamInstanceProfile: 
           IamInstanceProfile
-        ImageId: String
-        InstanceInitiatedShutdownBehavior: String
-        InstanceMarketOptions: 
-          InstanceMarketOptions
-        InstanceRequirements: 
-          InstanceRequirements
-        InstanceType: String
-        KernelId: String
-        KeyName: String
-        LicenseSpecifications: 
-          - LicenseSpecification
+        # This is Amazon Linux 2023 AMI for amd64
+        ImageId: resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+        # ImageId: ami-02396cdd13e9a1257
+        InstanceInitiatedShutdownBehavior: terminate
+        # for spot instances
+        # InstanceMarketOptions: 
+        #   InstanceMarketOptions
+        # use this to specify reqs instead of instance type
+        # InstanceRequirements: 
+        #   InstanceRequirements
+        InstanceType: t3.large
+        KeyName: !Sub "${Stage}_staking_keys"
         MaintenanceOptions: 
           MaintenanceOptions
         MetadataOptions: 
           MetadataOptions
         Monitoring: 
-          Monitoring
+          Enabled: true
         NetworkInterfaces: 
           - NetworkInterface
         Placement: 
           Placement
         PrivateDnsNameOptions: 
           PrivateDnsNameOptions
-        RamDiskId: String
         SecurityGroupIds: 
-          - String
-        SecurityGroups: 
-          - String
+          - !GetAtt SecurityGroup.GroupId
         TagSpecifications: 
           - TagSpecification
         UserData: String
       LaunchTemplateName: !Sub "${Stage}_launch_template"
+
+      # 12/30 options completed
 
           # ec2 instance - create
           # asg - create
