@@ -100,32 +100,42 @@ Resources:
       AvailabilityZones: 
         - us-east-1d
       CapacityRebalance: true
-      Context: String
-      DefaultInstanceWarmup: Integer
       DesiredCapacity: 0
-      HealthCheckGracePeriod: Integer
-      HealthCheckType: String
       LaunchTemplate: 
         LaunchTemplateSpecification
-      LifecycleHookSpecificationList: 
-        - LifecycleHookSpecification
-      LoadBalancerNames: 
-        - String
-      MaxInstanceLifetime: Integer
+      # LifecycleHookSpecificationList: 
+      #   - LifecycleHookSpecification
       MaxSize: 2
       MetricsCollection: 
         - Granularity: 1Minute
       MinSize: 0
-      MixedInstancesPolicy: 
-        MixedInstancesPolicy
-      NewInstancesProtectedFromScaleIn: Boolean
-      NotificationConfigurations: 
-        - NotificationConfiguration
-      PlacementGroup: String
+      # MixedInstancesPolicy: 
+      #   MixedInstancesPolicy
+      NewInstancesProtectedFromScaleIn: false
       Tags: 
-        - TagProperty
-      TargetGroupARNs: 
-        - String
+        -
+          Key: Name
+          Value: !Sub "ECS Instance - ${AWS::StackName}"
+          PropagateAtLaunch: true
+        -
+          Key: Description
+          Value: "This instance is the part of the Auto Scaling group which was created through Cloudformation"
+          PropagateAtLaunch: true
+        -
+          Key: aws:cloudformation:logical-id
+          Value: !Ref AutoScalingGroup
+          PropagateAtLaunch: true
+        -
+          Key: aws:cloudformation:stack-id
+          Value: !Ref AWS::StackId
+          PropagateAtLaunch: true
+        
+        -
+          Key: aws:cloudformation:stack-name
+          Value: !Ref AWS::StackName
+          PropagateAtLaunch: true
+      # TargetGroupARNs: 
+      #   - String
       TerminationPolicies: 
         - Default
       VPCZoneIdentifier: 
