@@ -39,36 +39,34 @@ task_def = {
     "family": f"{prefix}_eth_staker",
     "executionRoleArn": "arn:aws:iam::092475342352:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 10,
     "volumes": [],
-    "status": "ACTIVE",
-    "requiresAttributes": [
-        {
-            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
-        },
-        {
-            "name": "ecs.capability.execution-role-awslogs"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.ecr-auth"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
-        },
-        {
-            "name": "ecs.capability.execution-role-ecr-pull"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
-        },
-        {
-            "name": "ecs.capability.task-eni"
-        }
-    ],
+    # "requiresAttributes": [
+    #     {
+    #         "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+    #     },
+    #     {
+    #         "name": "ecs.capability.execution-role-awslogs"
+    #     },
+    #     {
+    #         "name": "com.amazonaws.ecs.capability.ecr-auth"
+    #     },
+    #     {
+    #         "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+    #     },
+    #     {
+    #         "name": "ecs.capability.execution-role-ecr-pull"
+    #     },
+    #     {
+    #         "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+    #     },
+    #     {
+    #         "name": "ecs.capability.task-eni"
+    #     }
+    # ],
     "placementConstraints": [],
-    "compatibilities": [
-        "EC2",
-    ],
+    # "compatibilities": [
+    #     "EC2",
+    # ],
     "runtimePlatform": {
         "operatingSystemFamily": "LINUX"
     },
@@ -77,8 +75,6 @@ task_def = {
     ],
     "cpu": "512",
     "memory": "6144",
-    "registeredAt": "2023-04-25T09:38:41.227000-04:00",
-    "registeredBy": "arn:aws:iam::092475342352:root"
 }
 
 # "placementConstraints": [

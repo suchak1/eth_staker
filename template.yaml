@@ -68,9 +68,10 @@ Resources:
           MinimumHealthyPercent: 100
         DeploymentController: 
           Type: ECS
-        DesiredCount: 1
+        DesiredCount: 0
         EnableECSManagedTags: true
-        EnableExecuteCommand: true
+        # EnableExecuteCommand: true
+        # https://github.com/aws/aws-cli/issues/6242
         LaunchType: EC2
         NetworkConfiguration: 
           AwsvpcConfiguration:
@@ -87,6 +88,58 @@ Resources:
         SchedulingStrategy: REPLICA
         ServiceName: !Sub "${Stage}2_staking_service"
         TaskDefinition: !Sub "${Stage}_eth_staker"
+
+  # ECSAutoScalingGroup:
+  #   DependsOn: ECSCluster
+  #   Type: AWS::AutoScaling::AutoScalingGroup
+  #   Properties:
+  #     VPCZoneIdentifier: !Ref Subnets
+  #     LaunchConfigurationName: !Ref ECSLaunchConfiguration
+  #     MinSize: !Ref ClusterSize
+  #     MaxSize: !Ref ClusterSize
+  #     DesiredCapacity: !Ref ClusterSize
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub ${EnvironmentName} ECS host
+  #         PropagateAtLaunch: true
+  #   CreationPolicy:
+  #     ResourceSignal:
+  #       Timeout: PT15M
+  #   UpdatePolicy:
+  #     AutoScalingRollingUpdate:
+  #       MinInstancesInService: 1
+  #       MaxBatchSize: 1
+  #       PauseTime: PT15M
+  #       SuspendProcesses:
+  #         - HealthCheck
+  #         - ReplaceUnhealthy
+  #         - AZRebalance
+  #         - AlarmNotification
+  #         - ScheduledActions
+  #       WaitOnResourceSignals: true
+
+  # ECSLaunchConfiguration:
+
+  # # TRY DOING LAUNCH TEMPLATE INSTEAD
+  #   Type: AWS::AutoScaling::LaunchConfiguration
+  #   Properties:
+  #     ImageId: !Ref ECSAMI
+  #     InstanceType: !Ref InstanceType
+  #     SecurityGroups:
+  #       - !Ref SecurityGroup
+  #     IamInstanceProfile: !Ref ECSInstanceProfile
+  #     UserData:
+  #       "Fn::Base64": !Sub |
+  #         #!/bin/bash
+  #         yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+  #         yum install -y https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+  #         yum install -y aws-cfn-bootstrap hibagent 
+  #         /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
+  #         /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
+  #         /usr/bin/enable-ec2-spot-hibernation
+
+    
+
       
 
           # ec2 instance - create
