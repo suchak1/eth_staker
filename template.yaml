@@ -166,24 +166,17 @@ Resources:
           CapacityReservationSpecification
         CpuOptions: 
           CpuOptions
-        CreditSpecification: 
-          CreditSpecification
-        DisableApiStop: Boolean
-        DisableApiTermination: Boolean
+        DisableApiStop: false
+        DisableApiTermination: false
         EbsOptimized: true
         ElasticGpuSpecifications: 
           - ElasticGpuSpecification
         ElasticInferenceAccelerators: 
           - LaunchTemplateElasticInferenceAccelerator
-        EnclaveOptions: 
-          EnclaveOptions
-        HibernationOptions: 
-          HibernationOptions
         IamInstanceProfile: 
           IamInstanceProfile
         # This is Amazon Linux 2023 AMI for amd64
         ImageId: resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
-        # ImageId: ami-02396cdd13e9a1257
         InstanceInitiatedShutdownBehavior: terminate
         # for spot instances
         # InstanceMarketOptions: 
@@ -212,7 +205,7 @@ Resources:
         UserData: String
       LaunchTemplateName: !Sub "${Stage}_launch_template"
 
-      # 12/30 options completed
+      # 17/30 options completed
 
           # ec2 instance - create
           # asg - create
