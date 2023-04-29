@@ -22,34 +22,45 @@ Resources:
       Properties:
         Cluster: !Sub "${Stage}2-staking-cluster"
         DeploymentConfiguration: 
-          DeploymentConfiguration
+          # Alarms:
+          DeploymentCircuitBreaker:
+            Enable: false
+            Rollback: true
+          MaximumPercent: 200
+          MinimumHealthyPercent: 100
         DeploymentController: 
-          DeploymentController
+          Type: ECS
         DesiredCount: 1
         EnableECSManagedTags: true
         EnableExecuteCommand: true
-        HealthCheckGracePeriodSeconds: Integer
         LaunchType: EC2
         NetworkConfiguration: 
-          NetworkConfiguration
-        PlacementConstraints: 
-          - PlacementConstraint
+          AwsvpcConfiguration:
+            AssignPublicIp: DISABLED
+            SecurityGroups: 
+              - String
+            Subnets: 
+              - String
         PlacementStrategies: 
-          - PlacementStrategy
-        SchedulingStrategy: String
-        ServiceConnectConfiguration: 
-          ServiceConnectConfiguration
+          - Type: spread
+            Field: attribute:ecs.availability-zone
+          - Type: spread
+            Field: instanceId
+        SchedulingStrategy: REPLICA
+        # ServiceConnectConfiguration: 
+        #   ServiceConnectConfiguration
         ServiceName: !Sub "${Stage}2_staking_service"
-        ServiceRegistries: 
-          - ServiceRegistry
+        # ServiceRegistries: 
+        #   - ServiceRegistry
         TaskDefinition: !Sub "${Stage}_eth_staker"
       
 
 
           # service
-          # asg
-          # vpc
-          # subnets
-          # security group
+          # ec2 instance - create
+          # asg - create
+          # vpc - just pass in
+          # subnets - just pass in
+          # security group - try to create
           # need io2 500 gb ssd ebs vol attached to ec2 instance
           # turn on ebs optimization
