@@ -89,37 +89,70 @@ Resources:
         SchedulingStrategy: REPLICA
         ServiceName: !Sub "${Stage}2_staking_service"
         TaskDefinition: !Sub "${Stage}_eth_staker"
-
-  ECSAutoScalingGroup:
-    DependsOn: ECSCluster
+  AutoScalingGroup:
+  # FIGURE OUT HOW TO LINK THIS TO SERVICE OR CLUSTER
+    DependsOn: 
+      - ECSCluster
+      - LaunchTemplate
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      VPCZoneIdentifier: !Ref Subnets
-      LaunchConfigurationName: !Ref ECSLaunchConfiguration
-      MinSize: !Ref ClusterSize
-      MaxSize: !Ref ClusterSize
-      DesiredCapacity: !Ref ClusterSize
-      Tags:
-        - Key: Name
-          Value: !Sub ${EnvironmentName} ECS host
-          PropagateAtLaunch: true
-    CreationPolicy:
-      ResourceSignal:
-        Timeout: PT15M
-    UpdatePolicy:
-      AutoScalingRollingUpdate:
-        MinInstancesInService: 1
-        MaxBatchSize: 1
-        PauseTime: PT15M
-        SuspendProcesses:
-          - HealthCheck
-          - ReplaceUnhealthy
-          - AZRebalance
-          - AlarmNotification
-          - ScheduledActions
-        WaitOnResourceSignals: true
+      AutoScalingGroupName: !Sub "ECS_${Stage}_staking_ASG"
+      AvailabilityZones: 
+        - us-east-1d
+      CapacityRebalance: true
+      Context: String
+      DefaultInstanceWarmup: Integer
+      DesiredCapacity: 0
+      HealthCheckGracePeriod: Integer
+      HealthCheckType: String
+      LaunchTemplate: 
+        LaunchTemplateSpecification
+      LifecycleHookSpecificationList: 
+        - LifecycleHookSpecification
+      LoadBalancerNames: 
+        - String
+      MaxInstanceLifetime: Integer
+      MaxSize: 2
+      MetricsCollection: 
+        - Granularity: 1Minute
+      MinSize: 0
+      MixedInstancesPolicy: 
+        MixedInstancesPolicy
+      NewInstancesProtectedFromScaleIn: Boolean
+      NotificationConfigurations: 
+        - NotificationConfiguration
+      PlacementGroup: String
+      Tags: 
+        - TagProperty
+      TargetGroupARNs: 
+        - String
+      TerminationPolicies: 
+        - Default
+      VPCZoneIdentifier: 
+        - !Ref Subnet
+    #   VPCZoneIdentifier: !Ref Subnets
+    #   DesiredCapacity: !Ref ClusterSize
+    #   Tags:
+    #     - Key: Name
+    #       Value: !Sub ${EnvironmentName} ECS host
+    #       PropagateAtLaunch: true
+    # CreationPolicy:
+    #   ResourceSignal:
+    #     Timeout: PT15M
+    # UpdatePolicy:
+    #   AutoScalingRollingUpdate:
+    #     MinInstancesInService: 1
+    #     MaxBatchSize: 1
+    #     PauseTime: PT15M
+    #     SuspendProcesses:
+    #       - HealthCheck
+    #       - ReplaceUnhealthy
+    #       - AZRebalance
+    #       - AlarmNotification
+    #       - ScheduledActions
+    #     WaitOnResourceSignals: true
 
-  ECSLaunchConfiguration:
+  # ECSLaunchConfiguration:
 
   # TRY DOING LAUNCH TEMPLATE INSTEAD
     # Type: AWS::AutoScaling::LaunchConfiguration
