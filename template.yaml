@@ -102,15 +102,12 @@ Resources:
       CapacityRebalance: true
       DesiredCapacity: 0
       LaunchTemplate: 
-        LaunchTemplateSpecification
-      # LifecycleHookSpecificationList: 
-      #   - LifecycleHookSpecification
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
       MaxSize: 2
       MetricsCollection: 
         - Granularity: 1Minute
       MinSize: 0
-      # MixedInstancesPolicy: 
-      #   MixedInstancesPolicy
       NewInstancesProtectedFromScaleIn: false
       Tags: 
         -
@@ -134,8 +131,6 @@ Resources:
           Key: aws:cloudformation:stack-name
           Value: !Ref AWS::StackName
           PropagateAtLaunch: true
-      # TargetGroupARNs: 
-      #   - String
       TerminationPolicies: 
         - Default
       VPCZoneIdentifier: 
