@@ -53,10 +53,12 @@ jobs:
         env:
           Stage: dev
           Subnet: ${{ secrets.SUBNET }}
+          VPC: ${{ secrets.VPC }}
         run: |
           echo "
           Stage=${Stage}
           Subnet=${Subnet}
+          VPC=${VPC}
           " >> dev-parameters.env
         if: ${{ github.ref != 'refs/heads/master' }}
 

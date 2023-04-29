@@ -9,8 +9,41 @@ Parameters:
   Subnet:
     Type: "String"
     NoEcho: true
+  VPC:
+    Type: "String"
+    NoEcho: true
 
 Resources:
+  SecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: String
+        GroupName: !Sub "${Stage}_staking_sg"
+        SecurityGroupEgress: 
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: -1
+            # DestinationPrefixListId: String
+            # DestinationSecurityGroupId: String
+            # FromPort: Integer
+            # ToPort: Integer
+        SecurityGroupIngress: 
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            # SourcePrefixListId: String
+            # SourceSecurityGroupId: String
+            # SourceSecurityGroupName: String
+            # SourceSecurityGroupOwnerId: String
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: tcp
+            FromPort: 80
+            ToPort: 80
+            # SourcePrefixListId: String
+            # SourceSecurityGroupId: String
+            # SourceSecurityGroupName: String
+            # SourceSecurityGroupOwnerId: String
+        VpcId: !Ref VPC
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
@@ -22,10 +55,12 @@ Resources:
       # CONFIGURE LOGGING HERE
   ECSService:
       Type: AWS::ECS::Service
+      DependsOn: 
+        - ECSCluster
+        - SecurityGroup
       Properties:
         Cluster: !Sub "${Stage}2-staking-cluster"
         DeploymentConfiguration: 
-          # Alarms:
           DeploymentCircuitBreaker:
             Enable: false
             Rollback: true
@@ -41,7 +76,7 @@ Resources:
           AwsvpcConfiguration:
             AssignPublicIp: DISABLED
             SecurityGroups: 
-              - String
+              - !GetAtt SecurityGroup.GroupId
             Subnets: 
               - !Ref Subnet
         PlacementStrategies: 
@@ -50,20 +85,11 @@ Resources:
           - Type: spread
             Field: instanceId
         SchedulingStrategy: REPLICA
-        # ServiceConnectConfiguration: 
-        #   ServiceConnectConfiguration
         ServiceName: !Sub "${Stage}2_staking_service"
-        # ServiceRegistries: 
-        #   - ServiceRegistry
         TaskDefinition: !Sub "${Stage}_eth_staker"
       
 
-
-          # service
           # ec2 instance - create
           # asg - create
-          # vpc - just pass in
-          # subnets - just pass in
-          # security group - try to create
           # need io2 500 gb ssd ebs vol attached to ec2 instance
           # turn on ebs optimization
