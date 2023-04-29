@@ -49,11 +49,11 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      # Update stack
-      # aws cloudformation update-stack --stack-name EC2ContainerService-dev-staking-cluster --template-body file://template.yaml --parameters file://dev-parameters.json
+      - name: Update ECS stack
+        run: scripts/deploy_stack.sh
 
-      # Generate task definition
-      - run: python3 scripts/gen_task_def.py
+      - name: Generate task definition
+        run: python3 scripts/gen_task_def.py
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
