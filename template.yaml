@@ -183,11 +183,12 @@ Resources:
             /usr/bin/enable-ec2-spot-hibernation
             mkdir -p /mnt/ebs
             MOUNT_EBS="mount -o nouuid /dev/sdx /mnt/ebs"
+            eval "${MOUNT_EBS}"
             if [ $? -eq 0 ]; then
                 echo "Snapshot EBS volume loaded."
             else
                 mkfs -t xfs /dev/sdx
-                mount -o nouuid /dev/sdx /mnt/ebs
+                eval "${MOUNT_EBS}"
                 echo "New volume initialized."
             fi
 
