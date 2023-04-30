@@ -181,6 +181,8 @@ Resources:
             /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource LaunchTemplate
             /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource AutoScalingGroup
             /usr/bin/enable-ec2-spot-hibernation
+            mkdir -p /mnt/ebs
+
       LaunchTemplateName: !Sub "${Stage}_launch_template"
 
 
@@ -192,13 +194,8 @@ Resources:
 # sudo mount -o nouuid /dev/sdx /mnt/ebs
 # should now be able to write to /mnt/ebs
 
-# write stack name to file?
-# or use ecs cluster name in /etc/ecs/ecs.config to get instance id / volume id
-# out of multiple volumes attached to instance, it will be biggest volume
-# use volume id to enable auto-enabled I/O on the fly
 # create new iam role that allows all permissions to do this
 # define role here in cf and attach to IamInstanceProfile or TaskExecutionRole in LaunchTemplate
-
 
 # can docker container access mounted drive?
 # stop geth, beacon-node, and validators before taking snapshot
