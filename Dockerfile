@@ -6,10 +6,12 @@ ARG DEPLOY_ENV
 ARG VERSION
 ENV DEPLOY_ENV "${DEPLOY_ENV}"
 ENV VERSION "${VERSION}"
-ENV ETH_DIR "~/ethereum"
-ENV EXEC_DIR "${ETH_DIR}/execution"
-ENV CONS_DIR "${ETH_DIR}/consensus"
-ENV PRYSM_DIR "${CONS_DIR}/prysm"
+ENV ETH_DIR "/ethereum"
+ENV EXEC_DIR "~${ETH_DIR}/execution"
+ENV CONS_DIR "~${ETH_DIR}/consensus"
+ENV PRYSM_DIR_BASE "${CONS_DIR}/prysm"
+ENV REL_PRYSM_DIR ".${PRYSM_DIR_BASE}"
+ENV PRYSM_DIR "~${PRYSM_DIR_BASE}"
 
 # Install deps
 RUN apt-get update && \
@@ -39,7 +41,7 @@ RUN curl -Lo prysmctl "https://github.com/prysmaticlabs/prysm/releases/download/
 RUN chmod +x beacon-chain validator prysmctl
 
 # Download consensus snapshot
-COPY "${PRYSM_DIR}/download_checkpoint.sh" .
+COPY "${REL_PRYSM_DIR}/download_checkpoint.sh" .
 RUN bash download_checkpoint.sh
 
 # Use EBS for geth datadir
