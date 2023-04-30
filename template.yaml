@@ -13,8 +13,12 @@ Parameters:
     Type: "String"
     NoEcho: true
   DesiredCapacity:
-    Type: "Integer"
-    Default: 0
+    Type: "Number"
+    Default: 1
+  LatestECSOptimizedAMI:
+    Description: AMI ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id
 
 Resources:
   SecurityGroup:
@@ -25,36 +29,25 @@ Resources:
         SecurityGroupEgress: 
           - CidrIp: 0.0.0.0/0
             IpProtocol: -1
-            # DestinationPrefixListId: String
-            # DestinationSecurityGroupId: String
-            # FromPort: Integer
-            # ToPort: Integer
         SecurityGroupIngress: 
           - CidrIp: 0.0.0.0/0
             IpProtocol: tcp
             FromPort: 22
             ToPort: 22
-            # SourcePrefixListId: String
-            # SourceSecurityGroupId: String
-            # SourceSecurityGroupName: String
-            # SourceSecurityGroupOwnerId: String
           - CidrIp: 0.0.0.0/0
             IpProtocol: tcp
             FromPort: 80
             ToPort: 80
-            # SourcePrefixListId: String
-            # SourceSecurityGroupId: String
-            # SourceSecurityGroupName: String
-            # SourceSecurityGroupOwnerId: String
         VpcId: !Ref VPC
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Sub "${Stage}2-staking-cluster"
+      ClusterName: !Sub "${Stage}-staking-cluster"
       # No capacity providers necessary for EC2
       ClusterSettings:
         - Name: containerInsights
           Value: enabled
+      # ECS Execute logging is defined in Config
       # CONFIGURE LOGGING HERE
   ECSService:
       Type: AWS::ECS::Service
@@ -62,7 +55,7 @@ Resources:
         - ECSCluster
         - SecurityGroup
       Properties:
-        Cluster: !Sub "${Stage}2-staking-cluster"
+        Cluster: !Sub "${Stage}-staking-cluster"
         DeploymentConfiguration: 
           DeploymentCircuitBreaker:
             Enable: false
@@ -71,7 +64,6 @@ Resources:
           MinimumHealthyPercent: 100
         DeploymentController: 
           Type: ECS
-        # Change this to 1 after ASG and Launch Template/Config
         DesiredCount: !Ref DesiredCapacity
         EnableECSManagedTags: true
         # EnableExecuteCommand: true
@@ -90,10 +82,9 @@ Resources:
           - Type: spread
             Field: instanceId
         SchedulingStrategy: REPLICA
-        ServiceName: !Sub "${Stage}2_staking_service"
+        ServiceName: !Sub "${Stage}_staking_service"
         TaskDefinition: !Sub "${Stage}_eth_staker"
   AutoScalingGroup:
-  # FIGURE OUT HOW TO LINK THIS TO SERVICE OR CLUSTER
     DependsOn: 
       - ECSCluster
       - LaunchTemplate
@@ -121,20 +112,6 @@ Resources:
           Key: Description
           Value: "This instance is the part of the Auto Scaling group which was created through Cloudformation"
           PropagateAtLaunch: true
-        # Verify that cloudformation creates these automatically and remove
-        # -
-        #   Key: aws:cloudformation:logical-id
-        #   Value: !Ref AutoScalingGroup
-        #   PropagateAtLaunch: true
-        # -
-        #   Key: aws:cloudformation:stack-id
-        #   Value: !Ref AWS::StackId
-        #   PropagateAtLaunch: true
-        
-        # -
-        #   Key: aws:cloudformation:stack-name
-        #   Value: !Ref AWS::StackName
-        #   PropagateAtLaunch: true
       TerminationPolicies: 
         - Default
       VPCZoneIdentifier: 
@@ -161,7 +138,7 @@ Resources:
         IamInstanceProfile: 
           Name: ecsInstanceRole
         # This is Amazon Linux 2023 AMI for amd64
-        ImageId: resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+        ImageId: !Ref LatestECSOptimizedAMI
         InstanceInitiatedShutdownBehavior: terminate
         # for spot instances
         # InstanceMarketOptions: 
@@ -171,8 +148,8 @@ Resources:
         #   InstanceRequirements
         InstanceType: t3.large
         KeyName: !Sub "${Stage}_staking_keys"
-        # MaintenanceOptions: 
-        #   AutoRecovery:
+        MaintenanceOptions: 
+          AutoRecovery: default
         Monitoring: 
           Enabled: true
         SecurityGroupIds: 
@@ -206,5 +183,5 @@ Resources:
             /usr/bin/enable-ec2-spot-hibernation
       LaunchTemplateName: !Sub "${Stage}_launch_template"
 
-      # 30/30 options completed
-      # verify ebs optimization is enabled
+# use this to get asg connected to ECS cluster
+# https://stackoverflow.com/questions/35202993/how-can-i-connect-my-autoscaling-group-to-my-ecs-cluster#:~:text=You%20need%20to%20create%20a%20new%20capacity%20provider%20for%20the,group%20under%20Auto%20Scaling%20group%20.
