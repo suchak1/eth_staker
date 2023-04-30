@@ -2,6 +2,8 @@
 
 set -eu
 
+
+# Default deploy env for infra code should be dev
 Stage=${Stage:-dev}
 
 if [[ "${Stage}" = "dev" ]]

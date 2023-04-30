@@ -10,6 +10,9 @@ set -eu
 # https://beaconstate.ethstaker.cc
 # https://sync-mainnet.beaconcha.in
 
+# Default deploy env for app code should be prod
+DEPLOY_ENV=${DEPLOY_ENV:-prod}
+
 if [[ "${DEPLOY_ENV}" = "dev" ]]
 then
     NODE_HOST="https://goerli.beaconstate.ethstaker.cc"
