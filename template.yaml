@@ -182,6 +182,14 @@ Resources:
             /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource AutoScalingGroup
             /usr/bin/enable-ec2-spot-hibernation
             mkdir -p /mnt/ebs
+            MOUNT_EBS="mount -o nouuid /dev/sdx /mnt/ebs"
+            if [ $? -eq 0 ]; then
+                echo "Snapshot EBS volume loaded."
+            else
+                mkfs -t xfs /dev/sdx
+                mount -o nouuid /dev/sdx /mnt/ebs
+                echo "New volume initialized."
+            fi
 
       LaunchTemplateName: !Sub "${Stage}_launch_template"
 
@@ -190,6 +198,7 @@ Resources:
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-using-volumes.html
 # sudo mkdir -p /mnt/ebs
 # ONLY IF NOT LOADING FROM SNAPSHOT
+# https://stackoverflow.com/questions/29577641/how-can-i-test-in-bash-if-an-ebs-volume-already-has-a-filesystem-on-it
 # sudo mkfs -t xfs /dev/sdx
 # sudo mount -o nouuid /dev/sdx /mnt/ebs
 # should now be able to write to /mnt/ebs
