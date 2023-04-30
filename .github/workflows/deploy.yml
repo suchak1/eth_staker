@@ -49,18 +49,23 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
       
-      - name: Create parameters.env [dev]
+      - name: Create parameters.env
         env:
-          Stage: dev
+          Stage: ${{ fromJSON('["dev", "prod"]')[github.ref_name == 'master'] }}
           Subnet: ${{ secrets.SUBNET }}
           VPC: ${{ secrets.VPC }}
         run: |
+          if [[ "${Stage}" = "dev" ]]
+          then
+              ParamsFile=dev-parameters.env
+          else
+              ParamsFile=parameters.env
+          fi
           echo "
           Stage=${Stage}
           Subnet=${Subnet}
           VPC=${VPC}
-          " >> dev-parameters.env
-        if: ${{ github.ref != 'refs/heads/master' }}
+          " >> "${ParamsFile}.env"
 
       - name: Update ECS stack
         run: scripts/deploy_stack.sh

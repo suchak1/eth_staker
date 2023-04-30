@@ -2,8 +2,17 @@
 
 set -eu
 
+Stage=${Stage:-dev}
+
+if [[ "${Stage}" = "dev" ]]
+then
+    ParamsFile=dev-parameters.env
+else
+    ParamsFile=parameters.env
+fi
+
 aws cloudformation deploy \
-    --stack-name ECS-dev2-staking-cluster \
+    --stack-name "ECS-${Stage}-staking-cluster" \
     --template-file template.yaml \
-    --parameter-overrides $(cat dev-parameters.env) \
+    --parameter-overrides $(cat "${ParamsFile}") \
     # --no-execute-changeset
