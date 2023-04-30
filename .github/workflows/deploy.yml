@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      ACTIONS_STEP_DEBUG: true
+      Stage: ${{ fromJSON('["dev", "prod"]')[github.ref_name == 'master'] }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -51,7 +51,6 @@ jobs:
       
       - name: Create parameters.env
         env:
-          Stage: ${{ fromJSON('["dev", "prod"]')[github.ref_name == 'master'] }}
           Subnet: ${{ secrets.SUBNET }}
           VPC: ${{ secrets.VPC }}
         run: |
@@ -66,6 +65,7 @@ jobs:
           Subnet=${Subnet}
           VPC=${VPC}
           " >> "${ParamsFile}.env"
+          echo $(ls -a)
 
       - name: Update ECS stack
         run: scripts/deploy_stack.sh
