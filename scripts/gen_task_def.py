@@ -38,7 +38,7 @@ task_def = {
     ],
     "family": f"{prefix}_eth_staker",
     "executionRoleArn": "arn:aws:iam::092475342352:role/ecsTaskExecutionRole",
-    "networkMode": "awsvpc",
+    "networkMode": "bridge",
     "volumes": [],
     # "requiresAttributes": [
     #     {

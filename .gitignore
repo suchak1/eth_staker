@@ -1,2 +1,4 @@
 task-definition.json
 ethereum
+*.env
+.DS_Store
