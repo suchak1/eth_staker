@@ -67,7 +67,6 @@ Resources:
         # EnableExecuteCommand: true
         # https://github.com/aws/aws-cli/issues/6242
         LaunchType: EC2
-        NetworkConfiguration: 
         PlacementStrategies: 
           - Type: spread
             Field: attribute:ecs.availability-zone
