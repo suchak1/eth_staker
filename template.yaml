@@ -61,7 +61,7 @@ Resources:
             Enable: false
             Rollback: true
           MaximumPercent: 200
-          MinimumHealthyPercent: 100
+          MinimumHealthyPercent: 0
         DeploymentController: 
           Type: ECS
         DesiredCount: !Ref DesiredCapacity
