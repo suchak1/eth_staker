@@ -155,8 +155,22 @@ Resources:
     Type: AWS::EC2::LaunchTemplate
     Properties: 
       LaunchTemplateData: 
-        BlockDeviceMappings: 
-          - BlockDeviceMapping
+        BlockDeviceMappings:
+          - 
+            DeviceName: /dev/sdx
+            Ebs: 
+              DeleteOnTermination: true
+              # Encrypted: Boolean
+              # provisioned
+              # Iops: Integer
+              # KmsKeyId: String
+              # SnapshotId: String
+              # not for io2
+              # Throughput: Integer
+              VolumeSize: 500
+              VolumeType: io2
+            # NoDevice: String
+            # VirtualName: String
         DisableApiStop: false
         DisableApiTermination: false
         EbsOptimized: true
@@ -200,10 +214,18 @@ Resources:
                 Key: Description
                 Value: "This instance is the part of the Launch Template which was created through Cloudformation"
                 PropagateAtLaunch: true
-        UserData: String
+        UserData:
+          "Fn::Base64": !Sub |
+            #!/bin/bash
+            echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+            yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+            yum install -y https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+            yum install -y aws-cfn-bootstrap hibagent 
+            /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource LaunchTemplate
+            /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource AutoScalingGroup
+            /usr/bin/enable-ec2-spot-hibernation
       LaunchTemplateName: !Sub "${Stage}_launch_template"
 
-      # 28/30 options completed
+      # 30/30 options completed
 
-          # need io2 500 gb ssd ebs vol attached to ec2 instance
           # verify ebs optimization is enabled
