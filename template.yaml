@@ -182,30 +182,16 @@ Resources:
             /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource AutoScalingGroup
             /usr/bin/enable-ec2-spot-hibernation
             mkdir -p /mnt/ebs
-            MOUNT_EBS="mount -o nouuid /dev/sdx /mnt/ebs"
-            eval "${MOUNT_EBS}"
+            mkfs -t xfs /dev/sdx
             if [ $? -eq 0 ]; then
-                echo "Snapshot EBS volume loaded."
-            else
-                mkfs -t xfs /dev/sdx
-                eval "${MOUNT_EBS}"
                 echo "New volume initialized."
+            else
+                echo "Snapshot EBS volume loaded."
             fi
+            mount -o nouuid /dev/sdx /mnt/ebs
 
       LaunchTemplateName: !Sub "${Stage}_launch_template"
 
-
-# how to use ebs vol
-# https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-using-volumes.html
-# sudo mkdir -p /mnt/ebs
-# ONLY IF NOT LOADING FROM SNAPSHOT
-# https://stackoverflow.com/questions/29577641/how-can-i-test-in-bash-if-an-ebs-volume-already-has-a-filesystem-on-it
-# sudo mkfs -t xfs /dev/sdx
-# sudo mount -o nouuid /dev/sdx /mnt/ebs
-# should now be able to write to /mnt/ebs
-
-# create new iam role that allows all permissions to do this
-# define role here in cf and attach to IamInstanceProfile or TaskExecutionRole in LaunchTemplate
 
 # can docker container access mounted drive?
 # stop geth, beacon-node, and validators before taking snapshot
@@ -213,6 +199,8 @@ Resources:
 # put snapshot id in ssm param
 # use resolve:ssm in cf for snapshotId in ebs config
 # after taking snapshot, delete snapshots that are older than 90 days
+# create new iam role that allows all permissions to do this
+# define role here in cf and attach to IamInstanceProfile or TaskExecutionRole in LaunchTemplate
 # restart geth, beacon-node, and validators
 
 # DO NOT ENABLE FAST RESTORE - V EXPENSIVE
