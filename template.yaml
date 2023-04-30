@@ -98,7 +98,7 @@ Resources:
     Properties:
       AutoScalingGroupName: !Sub "ECS_${Stage}_staking_ASG"
       AvailabilityZones: 
-        - us-east-1d
+        - !Sub "${AWS::Region}d"
       CapacityRebalance: true
       DesiredCapacity: 0
       LaunchTemplate: 
@@ -118,32 +118,28 @@ Resources:
           Key: Description
           Value: "This instance is the part of the Auto Scaling group which was created through Cloudformation"
           PropagateAtLaunch: true
-        -
-          Key: aws:cloudformation:logical-id
-          Value: !Ref AutoScalingGroup
-          PropagateAtLaunch: true
-        -
-          Key: aws:cloudformation:stack-id
-          Value: !Ref AWS::StackId
-          PropagateAtLaunch: true
+        # Verify that cloudformation creates these automatically and remove
+        # -
+        #   Key: aws:cloudformation:logical-id
+        #   Value: !Ref AutoScalingGroup
+        #   PropagateAtLaunch: true
+        # -
+        #   Key: aws:cloudformation:stack-id
+        #   Value: !Ref AWS::StackId
+        #   PropagateAtLaunch: true
         
-        -
-          Key: aws:cloudformation:stack-name
-          Value: !Ref AWS::StackName
-          PropagateAtLaunch: true
+        # -
+        #   Key: aws:cloudformation:stack-name
+        #   Value: !Ref AWS::StackName
+        #   PropagateAtLaunch: true
       TerminationPolicies: 
         - Default
       VPCZoneIdentifier: 
         - !Ref Subnet
-  # ECSLaunchConfiguration:
-
   # TRY DOING LAUNCH TEMPLATE INSTEAD
+    # ECSLaunchConfiguration:
     # Type: AWS::AutoScaling::LaunchConfiguration
     # Properties:
-    #   ImageId: !Ref ECSAMI
-    #   InstanceType: !Ref InstanceType
-    #   SecurityGroups:
-    #     - !Ref SecurityGroup
     #   IamInstanceProfile: !Ref ECSInstanceProfile
     #   UserData:
     #     "Fn::Base64": !Sub |
@@ -154,7 +150,6 @@ Resources:
     #       /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
     #       /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
     #       /usr/bin/enable-ec2-spot-hibernation
-
   LaunchTemplate:
     DependsOn: SecurityGroup  
     Type: AWS::EC2::LaunchTemplate
@@ -162,52 +157,53 @@ Resources:
       LaunchTemplateData: 
         BlockDeviceMappings: 
           - BlockDeviceMapping
-        CapacityReservationSpecification: 
-          CapacityReservationSpecification
-        CpuOptions: 
-          CpuOptions
         DisableApiStop: false
         DisableApiTermination: false
         EbsOptimized: true
-        ElasticGpuSpecifications: 
-          - ElasticGpuSpecification
-        ElasticInferenceAccelerators: 
-          - LaunchTemplateElasticInferenceAccelerator
         IamInstanceProfile: 
-          IamInstanceProfile
+          Name: ecsInstanceRole
         # This is Amazon Linux 2023 AMI for amd64
         ImageId: resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
         InstanceInitiatedShutdownBehavior: terminate
         # for spot instances
         # InstanceMarketOptions: 
         #   InstanceMarketOptions
-        # use this to specify reqs instead of instance type
+        # # use this to specify reqs instead of instance type
         # InstanceRequirements: 
         #   InstanceRequirements
         InstanceType: t3.large
         KeyName: !Sub "${Stage}_staking_keys"
-        MaintenanceOptions: 
-          MaintenanceOptions
-        MetadataOptions: 
-          MetadataOptions
+        # MaintenanceOptions: 
+        #   AutoRecovery:
         Monitoring: 
           Enabled: true
-        NetworkInterfaces: 
-          - NetworkInterface
-        Placement: 
-          Placement
-        PrivateDnsNameOptions: 
-          PrivateDnsNameOptions
         SecurityGroupIds: 
           - !GetAtt SecurityGroup.GroupId
         TagSpecifications: 
-          - TagSpecification
+          - ResourceType: volume
+            Tags:
+              -
+                Key: Name
+                Value: !Sub "ECS Instance - ${AWS::StackName}"
+                PropagateAtLaunch: true
+              -
+                Key: Description
+                Value: "This volume is the part of the Launch Template which was created through Cloudformation"
+                PropagateAtLaunch: true
+          - ResourceType: instance
+            Tags:
+              -
+                Key: Name
+                Value: !Sub "ECS Instance - ${AWS::StackName}"
+                PropagateAtLaunch: true
+              -
+                Key: Description
+                Value: "This instance is the part of the Launch Template which was created through Cloudformation"
+                PropagateAtLaunch: true
         UserData: String
       LaunchTemplateName: !Sub "${Stage}_launch_template"
 
-      # 17/30 options completed
+      # 28/30 options completed
 
-          # ec2 instance - create
-          # asg - create
           # need io2 500 gb ssd ebs vol attached to ec2 instance
-          # turn on ebs optimization
+          # verify ebs optimization is enabled
