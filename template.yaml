@@ -128,7 +128,7 @@ Resources:
               DeleteOnTermination: true
               VolumeSize: 500
               # can't use io2 because of cost
-              VolumeType: gp2 # try gp3
+              VolumeType: gp3
               # Iops: 10000
               # 10 - 15k is laptop/desktop SSD throughput
               # Throughput: 1000
