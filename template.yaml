@@ -51,9 +51,7 @@ Resources:
       # CONFIGURE LOGGING HERE
   ECSService:
       Type: AWS::ECS::Service
-      DependsOn: 
-        - ECSCluster
-        - SecurityGroup
+      DependsOn: ECSCluster
       Properties:
         Cluster: !Sub "${Stage}-staking-cluster"
         DeploymentConfiguration: 
@@ -70,12 +68,6 @@ Resources:
         # https://github.com/aws/aws-cli/issues/6242
         LaunchType: EC2
         NetworkConfiguration: 
-          AwsvpcConfiguration:
-            AssignPublicIp: DISABLED
-            SecurityGroups: 
-              - !GetAtt SecurityGroup.GroupId
-            Subnets: 
-              - !Ref Subnet
         PlacementStrategies: 
           - Type: spread
             Field: attribute:ecs.availability-zone
