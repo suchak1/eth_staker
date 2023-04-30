@@ -12,6 +12,9 @@ Parameters:
   VPC:
     Type: "String"
     NoEcho: true
+  DesiredCapacity:
+    Type: "Integer"
+    Default: 0
 
 Resources:
   SecurityGroup:
@@ -69,7 +72,7 @@ Resources:
         DeploymentController: 
           Type: ECS
         # Change this to 1 after ASG and Launch Template/Config
-        DesiredCount: 0
+        DesiredCount: !Ref DesiredCapacity
         EnableECSManagedTags: true
         # EnableExecuteCommand: true
         # https://github.com/aws/aws-cli/issues/6242
@@ -100,7 +103,7 @@ Resources:
       AvailabilityZones: 
         - !Sub "${AWS::Region}d"
       CapacityRebalance: true
-      DesiredCapacity: 0
+      DesiredCapacity: !Sub "${DesiredCapacity}"
       LaunchTemplate: 
         LaunchTemplateId: !Ref LaunchTemplate
         Version: !GetAtt LaunchTemplate.LatestVersionNumber
@@ -136,20 +139,6 @@ Resources:
         - Default
       VPCZoneIdentifier: 
         - !Ref Subnet
-  # TRY DOING LAUNCH TEMPLATE INSTEAD
-    # ECSLaunchConfiguration:
-    # Type: AWS::AutoScaling::LaunchConfiguration
-    # Properties:
-    #   IamInstanceProfile: !Ref ECSInstanceProfile
-    #   UserData:
-    #     "Fn::Base64": !Sub |
-    #       #!/bin/bash
-    #       yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
-    #       yum install -y https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
-    #       yum install -y aws-cfn-bootstrap hibagent 
-    #       /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
-    #       /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
-    #       /usr/bin/enable-ec2-spot-hibernation
   LaunchTemplate:
     DependsOn: SecurityGroup  
     Type: AWS::EC2::LaunchTemplate
@@ -160,17 +149,12 @@ Resources:
             DeviceName: /dev/sdx
             Ebs: 
               DeleteOnTermination: true
-              # Encrypted: Boolean
-              # provisioned
-              # Iops: Integer
-              # KmsKeyId: String
-              # SnapshotId: String
-              # not for io2
-              # Throughput: Integer
               VolumeSize: 500
-              VolumeType: io2
-            # NoDevice: String
-            # VirtualName: String
+              # can't use io2 because of cost
+              VolumeType: gp2 # try gp3
+              # Iops: 10000
+              # 10 - 15k is laptop/desktop SSD throughput
+              # Throughput: 1000
         DisableApiStop: false
         DisableApiTermination: false
         EbsOptimized: true
@@ -199,21 +183,17 @@ Resources:
               -
                 Key: Name
                 Value: !Sub "ECS Instance - ${AWS::StackName}"
-                PropagateAtLaunch: true
               -
                 Key: Description
                 Value: "This volume is the part of the Launch Template which was created through Cloudformation"
-                PropagateAtLaunch: true
           - ResourceType: instance
             Tags:
               -
                 Key: Name
                 Value: !Sub "ECS Instance - ${AWS::StackName}"
-                PropagateAtLaunch: true
               -
                 Key: Description
                 Value: "This instance is the part of the Launch Template which was created through Cloudformation"
-                PropagateAtLaunch: true
         UserData:
           "Fn::Base64": !Sub |
             #!/bin/bash
@@ -227,5 +207,4 @@ Resources:
       LaunchTemplateName: !Sub "${Stage}_launch_template"
 
       # 30/30 options completed
-
-          # verify ebs optimization is enabled
+      # verify ebs optimization is enabled
