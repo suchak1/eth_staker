@@ -183,5 +183,35 @@ Resources:
             /usr/bin/enable-ec2-spot-hibernation
       LaunchTemplateName: !Sub "${Stage}_launch_template"
 
-# use this to get asg connected to ECS cluster
-# https://stackoverflow.com/questions/35202993/how-can-i-connect-my-autoscaling-group-to-my-ecs-cluster#:~:text=You%20need%20to%20create%20a%20new%20capacity%20provider%20for%20the,group%20under%20Auto%20Scaling%20group%20.
+
+# how to use ebs vol
+# https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-using-volumes.html
+# sudo mkdir -p /mnt/ebs
+# ONLY IF NOT LOADING FROM SNAPSHOT
+# sudo mkfs -t xfs /dev/sdx
+# sudo mount -o nouuid /dev/sdx /mnt/ebs
+# should now be able to write to /mnt/ebs
+
+# write stack name to file?
+# or use ecs cluster name in /etc/ecs/ecs.config to get instance id / volume id
+# out of multiple volumes attached to instance, it will be biggest volume
+# use volume id to enable auto-enabled I/O on the fly
+# create new iam role that allows all permissions to do this
+# define role here in cf and attach to IamInstanceProfile or TaskExecutionRole in LaunchTemplate
+
+
+# can docker container access mounted drive?
+# stop geth, beacon-node, and validators before taking snapshot
+# take snapshot every 1 month - check every hour and at start if snapshot doesn't exist or snapshot is older than 30 days
+# put snapshot id in ssm param
+# use resolve:ssm in cf for snapshotId in ebs config
+# after taking snapshot, delete snapshots that are older than 90 days
+# restart geth, beacon-node, and validators
+
+# DO NOT ENABLE FAST RESTORE - V EXPENSIVE
+
+# make sure /mnt/ebs exists, else throw error
+# mkdir -p or python make path /mnt/ebs/.ethereum and /mnt/ebs/.eth2
+# set geth datadir to /mnt/ebs/.ethereum
+
+# set beacon-node and validator data dir to /mnt/ebs/.eth2
