@@ -232,6 +232,7 @@ Resources:
           "Fn::Base64": !Sub |
             #!/bin/bash
             echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+            echo ECS_ENABLE_CONTAINER_METADATA=true >> /etc/ecs/ecs.config
             yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
             yum install -y https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
             yum install -y aws-cfn-bootstrap hibagent 
@@ -250,11 +251,6 @@ Resources:
             awk -F' '  '{print $NF}' <<< $(/sbin/ebsnvme-id /dev/sdx -v) > /mnt/ebs/VOLUME_ID
 
       LaunchTemplateName: !Sub "${Stage}_launch_template"
-
-# lsblk -o +SERIAL | grep /mnt/ebs (can be used in container)
-# /sbin/ebsnvme-id /dev/sdx -v (cannot be used in container - result must be written to /mnt/ebs
-# awk -F' '  '{print $NF}' <<< $(/sbin/ebsnvme-id /dev/sdx -v) > /mnt/ebs/VOLUME_ID
-
 
 # stop geth, beacon-node, and validators before taking snapshot
 # take snapshot every 1 month - check every hour and at start if snapshot doesn't exist or snapshot is older than 30 days
