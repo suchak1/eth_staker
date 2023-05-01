@@ -21,8 +21,44 @@ Parameters:
     Default: /aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id
 
 Resources:
-  # TaskRole:
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      # Description: String
+      # ManagedPolicyArns: 
+      #   - String
+      # MaxSessionDuration: Integer
+      # Path: String
+      # PermissionsBoundary: String
+      Policies: 
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ec2:CreateSnapshot'
+                Resource: '*'
+      RoleName: !Sub "${Stage}StakingTaskRole"
+      # Tags: 
+      #   - Tag
   #   pass
+  # list / describe snapshots
+  # create snapshots
+  # delete snapshots
+  # list / describe volumes
+  # list / describe instances
+  # get instance from ecs cluster
+  # modify ssm param
   TaskDefinition:
     DependsOn: TaskRole
     Type: AWS::ECS::TaskDefinition
@@ -32,20 +68,16 @@ Resources:
       Cpu: 512
       ExecutionRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole"
       Family: !Sub "${Stage}_eth_staker"
-      IpcMode: String
       Memory: 6144
       NetworkMode: bridge
-      PlacementConstraints: 
-        - TaskDefinitionPlacementConstraint
-      ProxyConfiguration: 
-        ProxyConfiguration
       RequiresCompatibilities: 
-        - String
+        - EC2
       RuntimePlatform: 
-        RuntimePlatform
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
       Tags: 
         - Tag
-      TaskRoleArn: String # THIS IS IAM ROLE TaskRole
+      TaskRoleArn: !GetAtt TaskRole.Arn
       Volumes: 
         - Volume
   SecurityGroup:
