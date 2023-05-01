@@ -22,16 +22,13 @@ aws cloudformation deploy \
 
 
 # use one of these:
-# https://docs.aws.amazon.com/cli/latest/reference/ecs/update-task-set.html
 # https://docs.aws.amazon.com/cli/latest/reference/ecs/update-service.html
-# https://docs.aws.amazon.com/cli/latest/reference/ecs/update-container-agent.html
 # https://docs.aws.amazon.com/cli/latest/reference/ecs/deregister-task-definition.html
-# https://docs.aws.amazon.com/cli/latest/reference/ecs/deregister-container-instance.html
 # https://docs.aws.amazon.com/cli/latest/reference/ecs/register-task-definition.html
-# https://docs.aws.amazon.com/cli/latest/reference/ecs/register-container-instance.html
 
 # use task-definition flag in this cmd OR
 aws ecs update-service \
     --cluster "${Stage}-staking-cluster" \
     --service "${Stage}_staking_service" \
+    --task-definition "${Stage}_eth_staker:latest" \
     --force-new-deployment
