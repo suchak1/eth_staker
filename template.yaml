@@ -19,6 +19,11 @@ Parameters:
     Description: AMI ID
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id
+  # SnapShot:
+  #   Description: Snapshot ID
+  #   Type: "String"
+  #   Default: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Stage}_staking_snapshot'
+
 
 Resources:
   TaskRole:
@@ -40,7 +45,7 @@ Resources:
       # Path: String
       # PermissionsBoundary: String
       Policies: 
-        - PolicyName: root
+        - PolicyName: BackupEBSVol
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -50,12 +55,13 @@ Resources:
                   - 'ec2:DeleteSnapshot'
                   - 'ec2:DescribeSnapshots'
                 Resource: '*'
+              - Effect: Allow
+                Action: 
+                  - 'ssm:PutParameter'
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Stage}_staking_snapshot'
       RoleName: !Sub "${Stage}StakingTaskRole"
       # Tags: 
       #   - Tag
-  # list / describe volumes
-  # list / describe instances
-  # get instance from ecs cluster
   # modify ssm param
   TaskDefinition:
     DependsOn: TaskRole
@@ -73,8 +79,6 @@ Resources:
       RuntimePlatform: 
         CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
-      Tags: 
-        - Tag
       TaskRoleArn: !GetAtt TaskRole.Arn
       Volumes: 
         - Volume
@@ -182,6 +186,9 @@ Resources:
               # Iops: 10000
               # 10 - 15k is laptop/desktop SSD throughput
               # Throughput: 1000
+              # SnapshotId: '{{resolve:ssm:${Stage}_staking_snapshot}}' 
+              # try defining cf param as ssm param val or 'default' / pseudo AWS::NoValue
+              # https://www.jforte.me/posts/create-ebs-volume-snapshot-condtions-aws-cdk/
         DisableApiStop: false
         DisableApiTermination: false
         EbsOptimized: true
