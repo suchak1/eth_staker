@@ -21,24 +21,20 @@ Parameters:
     Default: /aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id
 
 Resources:
-  ExecutionRole:
-    pass
+  # TaskRole:
+  #   pass
   TaskDefinition:
+    DependsOn: TaskRole
     Type: AWS::ECS::TaskDefinition
     Properties: 
       ContainerDefinitions: 
         - ContainerDefinition
       Cpu: 512
-      EphemeralStorage: 
-        EphemeralStorage
-      ExecutionRoleArn: String
-      Family: String
-      InferenceAccelerators: 
-        - InferenceAccelerator
+      ExecutionRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole"
+      Family: !Sub "${Stage}_eth_staker"
       IpcMode: String
       Memory: 6144
       NetworkMode: bridge
-      PidMode: String
       PlacementConstraints: 
         - TaskDefinitionPlacementConstraint
       ProxyConfiguration: 
@@ -49,7 +45,7 @@ Resources:
         RuntimePlatform
       Tags: 
         - Tag
-      TaskRoleArn: String
+      TaskRoleArn: String # THIS IS IAM ROLE TaskRole
       Volumes: 
         - Volume
   SecurityGroup:
