@@ -30,5 +30,5 @@ aws cloudformation deploy \
 aws ecs update-service \
     --cluster "${Stage}-staking-cluster" \
     --service "${Stage}_staking_service" \
-    --task-definition "${Stage}_eth_staker:latest" \
+    --task-definition "${Stage}_eth_staker" \
     --force-new-deployment
