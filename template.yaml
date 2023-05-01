@@ -38,12 +38,6 @@ Resources:
                 - ecs-tasks.amazonaws.com
             Action:
               - 'sts:AssumeRole'
-      # Description: String
-      # ManagedPolicyArns: 
-      #   - String
-      # MaxSessionDuration: Integer
-      # Path: String
-      # PermissionsBoundary: String
       Policies: 
         - PolicyName: BackupEBSVol
           PolicyDocument:
@@ -60,15 +54,20 @@ Resources:
                   - 'ssm:PutParameter'
                 Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Stage}_staking_snapshot'
       RoleName: !Sub "${Stage}StakingTaskRole"
-      # Tags: 
-      #   - Tag
-  # modify ssm param
   TaskDefinition:
     DependsOn: TaskRole
     Type: AWS::ECS::TaskDefinition
     Properties: 
       ContainerDefinitions: 
-        - ContainerDefinition
+        - Name: !Sub "${Stage}_staking_container"
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.us-east-1.amazonaws.com/${Stage}_eth_staker"
+          Essential: true
+          MountPoints:
+            - ContainerPath: /mnt/ebs
+              ReadOnly: false
+              SourceVolume: EBSVol
+          Interactive: true
+          PseudoTerminal: true
       Cpu: 512
       ExecutionRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole"
       Family: !Sub "${Stage}_eth_staker"
@@ -81,12 +80,7 @@ Resources:
         OperatingSystemFamily: LINUX
       TaskRoleArn: !GetAtt TaskRole.Arn
       Volumes: 
-        - 
-          # DockerVolumeConfiguration: 
-          #   DockerVolumeConfiguration
-          # EFSVolumeConfiguration: 
-          #   EFSVolumeConfiguration
-          Host: 
+        - Host: 
             SourcePath: /mnt/ebs
           Name: EBSVol
   SecurityGroup:
