@@ -81,7 +81,14 @@ Resources:
         OperatingSystemFamily: LINUX
       TaskRoleArn: !GetAtt TaskRole.Arn
       Volumes: 
-        - Volume
+        - 
+          # DockerVolumeConfiguration: 
+          #   DockerVolumeConfiguration
+          # EFSVolumeConfiguration: 
+          #   EFSVolumeConfiguration
+          Host: 
+            SourcePath: /mnt/ebs
+          Name: EBSVol
   SecurityGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
