@@ -19,3 +19,7 @@ aws cloudformation deploy \
     --parameter-overrides $(cat "${ParamsFile}") \
     --capabilities CAPABILITY_NAMED_IAM \
     # --no-execute-changeset
+aws ecs update-service \
+    --cluster "${Stage}-staking-cluster" \
+    --service "${Stage}_staking_service" \
+    --force-new-deployment
