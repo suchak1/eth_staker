@@ -69,23 +69,3 @@ jobs:
 
       - name: Update ECS stack
         run: scripts/deploy_stack.sh
-
-      # - name: Generate task definition
-      #   run: python3 scripts/gen_task_def.py
-
-      # - name: Fill in the new image ID in the Amazon ECS task definition
-      #   id: task-def
-      #   uses: aws-actions/amazon-ecs-render-task-definition@v1
-      #   with:
-      #     task-definition: task-definition.json
-      #     container-name: ${{ fromJSON('["dev_staking_container", "prod_staking_container"]')[github.ref_name == 'master'] }}
-      #     image: ${{ steps.build-image.outputs.image }}
-
-      # - name: Deploy Amazon ECS task definition
-      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-      #   with:
-      #     task-definition: ${{ steps.task-def.outputs.task-definition }}
-      #     # don't use this?
-      #     service: ${{ fromJSON('["dev_staking_service", "prod_staking_service"]')[github.ref_name == 'master'] }}
-      #     cluster: ${{ fromJSON('["dev-staking-cluster", "prod-staking-cluster"]')[github.ref_name == 'master'] }}
-      #     wait-for-service-stability: true

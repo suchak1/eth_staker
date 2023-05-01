@@ -64,6 +64,8 @@ Resources:
           Environment:
             - Name: AWS_DEFAULT_REGION
               Value: !Ref AWS::Region
+            - NAME: AWS
+              Value: true
           Essential: true
           MountPoints:
             - ContainerPath: /mnt/ebs
