@@ -17,4 +17,5 @@ aws cloudformation deploy \
     --stack-name "ECS-${Stage}-staking-cluster" \
     --template-file template.yaml \
     --parameter-overrides $(cat "${ParamsFile}") \
+    --capabilities CAPABILITY_NAMED_IAM \
     # --no-execute-changeset
