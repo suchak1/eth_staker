@@ -6,13 +6,10 @@ ARG DEPLOY_ENV
 ARG VERSION
 ENV DEPLOY_ENV "${DEPLOY_ENV}"
 ENV VERSION "${VERSION}"
-ENV HOME_DIR "/root"
-ENV ETH_DIR_BASE "/ethereum"
-ENV ETH_DIR "${HOME_DIR}${ETH_DIR_BASE}"
+ENV ETH_DIR "${HOME}/ethereum"
 ENV EXEC_DIR "${ETH_DIR}/execution"
-ENV PRYSM_DIR_BASE "${ETH_DIR_BASE}/consensus/prysm"
-ENV REL_PRYSM_DIR ".${PRYSM_DIR_BASE}"
-ENV PRYSM_DIR "${HOME_DIR}${PRYSM_DIR_BASE}"
+ENV CONS_DIR "${ETH_DIR}/consensus"
+ENV PRYSM_DIR "${CONS_DIR}/prysm"
 
 # Install deps
 RUN apt-get update && \
@@ -42,8 +39,8 @@ RUN curl -Lo prysmctl "https://github.com/prysmaticlabs/prysm/releases/download/
 RUN chmod +x beacon-chain validator prysmctl
 
 # Download consensus snapshot
-COPY "${REL_PRYSM_DIR}/download_checkpoint.sh" .
-# RUN bash download_checkpoint.sh
+COPY "${PRYSM_DIR}/download_checkpoint.sh" .
+RUN bash download_checkpoint.sh
 
 # Use EBS for geth datadir
 # quit geth gracefully first, take EBS snapshot, restart geth
@@ -62,4 +59,4 @@ COPY "${REL_PRYSM_DIR}/download_checkpoint.sh" .
 # Run app
 WORKDIR "${ETH_DIR}"
 COPY stake.py .
-# ENTRYPOINT python3 stake.py
+ENTRYPOINT python3 stake.py
