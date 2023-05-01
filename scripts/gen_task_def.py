@@ -22,7 +22,14 @@ task_def = {
             "entryPoint": [],
             "command": [],
             "environment": [],
-            "mountPoints": [],
+            "mountPoints": [
+                {
+                    "containerPath": "/mnt/ebs",
+                    "readOnly": False,
+                    "sourceVolume": "EBSVol"
+                }
+
+            ],
             "volumesFrom": [],
             "logConfiguration": {
                 "logDriver": "awslogs",
@@ -38,8 +45,15 @@ task_def = {
     ],
     "family": f"{prefix}_eth_staker",
     "executionRoleArn": "arn:aws:iam::092475342352:role/ecsTaskExecutionRole",
-    "networkMode": "bridge", # or 'host'
-    "volumes": [],
+    "networkMode": "bridge",  # or 'host'
+    "volumes": [
+        {
+            "host": {
+                "sourcePath": "/mnt/ebs"
+            },
+            "name": "EBSVol"
+        }
+    ],
     # "requiresAttributes": [
     #     {
     #         "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"

@@ -46,15 +46,8 @@ RUN bash download_checkpoint.sh
 # quit geth gracefully first, take EBS snapshot, restart geth
 # Make sure geth exits gracefully - parent process sends graceful kill signal to geth process
 # Lock down node - follow security best practices
-# Make sure node can access peers - modify security group? modify docker container networking?
-# ec2 instance can cannot to internet, but container cannot
 
-# ECS cannot place new container. This is a memory issue bc it is trying to run both containers at the same time while the second is getting ready.
-# Find a setting to allow for interruption (no overlap) or just lower container memory setting / use instance w more memory
-
-# Use cloudformation to create and update stack - test with second develop cluster (needs security group, ebs volume, instance type, etc)
-# Enable EBS optimized instance. Check w this cmd
-# aws ec2 describe-instance-attribute --attribute=ebsOptimized --instance-id=i-0be569150d6046db6
+# Use bind mount for EBS
 
 # Run app
 WORKDIR "${ETH_DIR}"
