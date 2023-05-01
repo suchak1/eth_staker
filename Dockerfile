@@ -13,7 +13,11 @@ ENV PRYSM_DIR "${CONS_DIR}/prysm"
 
 # Install deps
 RUN apt-get update && \
-    apt-get install -y python3 git curl bash
+    apt-get install -y python3 git curl bash python3-pip
+
+RUN python3 -m venv "${ETH_DIR}" --without-pip --system-site-packages && \
+    source "${ETH_DIR}/bin/activate" && \
+    python3 -m pip install boto3
 
 # # Download geth (execution)
 RUN mkdir -p "${EXEC_DIR}"
@@ -46,8 +50,6 @@ RUN bash download_checkpoint.sh
 # quit geth gracefully first, take EBS snapshot, restart geth
 # Make sure geth exits gracefully - parent process sends graceful kill signal to geth process
 # Lock down node - follow security best practices
-
-# Use bind mount for EBS
 
 # Run app
 WORKDIR "${ETH_DIR}"

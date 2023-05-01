@@ -21,6 +21,37 @@ Parameters:
     Default: /aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id
 
 Resources:
+  ExecutionRole:
+    pass
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties: 
+      ContainerDefinitions: 
+        - ContainerDefinition
+      Cpu: 512
+      EphemeralStorage: 
+        EphemeralStorage
+      ExecutionRoleArn: String
+      Family: String
+      InferenceAccelerators: 
+        - InferenceAccelerator
+      IpcMode: String
+      Memory: 6144
+      NetworkMode: bridge
+      PidMode: String
+      PlacementConstraints: 
+        - TaskDefinitionPlacementConstraint
+      ProxyConfiguration: 
+        ProxyConfiguration
+      RequiresCompatibilities: 
+        - String
+      RuntimePlatform: 
+        RuntimePlatform
+      Tags: 
+        - Tag
+      TaskRoleArn: String
+      Volumes: 
+        - Volume
   SecurityGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
@@ -51,7 +82,9 @@ Resources:
       # CONFIGURE LOGGING HERE
   ECSService:
       Type: AWS::ECS::Service
-      DependsOn: ECSCluster
+      DependsOn: 
+        - ECSCluster
+        - TaskDefinition
       Properties:
         Cluster: !Sub "${Stage}-staking-cluster"
         DeploymentConfiguration: 
@@ -183,8 +216,6 @@ Resources:
 
       LaunchTemplateName: !Sub "${Stage}_launch_template"
 
-
-# can docker container access mounted drive?
 # stop geth, beacon-node, and validators before taking snapshot
 # take snapshot every 1 month - check every hour and at start if snapshot doesn't exist or snapshot is older than 30 days
 # put snapshot id in ssm param
@@ -196,8 +227,7 @@ Resources:
 
 # DO NOT ENABLE FAST RESTORE - V EXPENSIVE
 
-# make sure /mnt/ebs exists, else throw error
-# mkdir -p or python make path /mnt/ebs/.ethereum and /mnt/ebs/.eth2
+# mkdir -p or python make path /mnt/ebs/.ethereum and /mnt/ebs/.eth2 if doesn't exist and no snapshot
 # set geth datadir to /mnt/ebs/.ethereum
 
 # set beacon-node and validator data dir to /mnt/ebs/.eth2
