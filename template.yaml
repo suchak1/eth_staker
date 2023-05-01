@@ -47,14 +47,12 @@ Resources:
               - Effect: Allow
                 Action: 
                   - 'ec2:CreateSnapshot'
+                  - 'ec2:DeleteSnapshot'
+                  - 'ec2:DescribeSnapshots'
                 Resource: '*'
       RoleName: !Sub "${Stage}StakingTaskRole"
       # Tags: 
       #   - Tag
-  #   pass
-  # list / describe snapshots
-  # create snapshots
-  # delete snapshots
   # list / describe volumes
   # list / describe instances
   # get instance from ecs cluster
@@ -241,8 +239,15 @@ Resources:
                 echo "Snapshot EBS volume loaded."
             fi
             mount -o nouuid /dev/sdx /mnt/ebs
+            # Write volume id to volume
+            awk -F' '  '{print $NF}' <<< $(/sbin/ebsnvme-id /dev/sdx -v) > /mnt/ebs/VOLUME_ID
 
       LaunchTemplateName: !Sub "${Stage}_launch_template"
+
+# lsblk -o +SERIAL | grep /mnt/ebs (can be used in container)
+# /sbin/ebsnvme-id /dev/sdx -v (cannot be used in container - result must be written to /mnt/ebs
+# awk -F' '  '{print $NF}' <<< $(/sbin/ebsnvme-id /dev/sdx -v) > /mnt/ebs/VOLUME_ID
+
 
 # stop geth, beacon-node, and validators before taking snapshot
 # take snapshot every 1 month - check every hour and at start if snapshot doesn't exist or snapshot is older than 30 days
