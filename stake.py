@@ -19,6 +19,11 @@ def get_env_bool(var_name):
                 and os.environ[var_name].lower() == 'true')
 
 
+max_snapshots = 3
+snapshot_days = 30
+max_snapshot_days = max_snapshots * snapshot_days
+
+
 class Snapshot:
     # or Backup
     def __init__(self) -> None:
@@ -26,8 +31,8 @@ class Snapshot:
         self.ec2 = boto3.client('ec2')
         self.volume_id = self.get_volume_id()
 
-    def is_older_than(snapshot, num_days):
-        created = snapshot['StartTime'].replace(tzinfo=None)
+    def is_older_than(self, snapshot, num_days):
+        created = self.get_snapshot_time(snapshot)
         now = datetime.utcnow()
         actual_delta = now - created
         max_delta = timedelta(days=num_days)
@@ -35,7 +40,8 @@ class Snapshot:
 
     def create(self, curr_snapshots):
         all_snapshots_are_old = all(
-            [self.is_older_than(snapshot, 30) for snapshot in curr_snapshots]
+            [self.is_older_than(snapshot, snapshot_days)
+             for snapshot in curr_snapshots]
         )
         if all_snapshots_are_old:
             snapshot = self.ec2.create_snapshot(
@@ -82,11 +88,26 @@ class Snapshot:
 
         return snapshots
 
+    def get_snapshot_time(self, snapshot):
+        return snapshot['StartTime'].replace(tzinfo=None)
+
+    def find_most_recent(self, curr_snapshots):
+        if not curr_snapshots:
+            return None
+        most_recent = self.get_snapshot_time(curr_snapshots[0])
+        for snapshot in curr_snapshots[1:]:
+            if self.get_snapshot_time(snapshot) > most_recent:
+                most_recent = snapshot
+
+        return most_recent
+
     def purge(self, curr_snapshots):
         # delete all snapshots older than 90 days and that have tag
         # for loop bc can't delete multiple in one req
         purgeable = [
-            snapshot for snapshot in curr_snapshots if self.is_older_than(snapshot, 90)
+            snapshot for snapshot in curr_snapshots if self.is_older_than(
+                snapshot, max_snapshot_days
+            )
         ]
 
         for snapshot in purgeable:
@@ -99,7 +120,7 @@ class Snapshot:
         curr_snapshots = self.get_snapshots()
         snapshot = self.create(curr_snapshots)
         self.purge(curr_snapshots)
-        return snapshot
+        return snapshot or self.find_most_recent(curr_snapshots)
 
 
 #   [
@@ -177,6 +198,7 @@ class Node:
 
         ipc_postfix = f"{'/goerli' if is_dev else ''}/geth.ipc"
         self.ipc_path = self.geth_data_dir + ipc_postfix
+        self.snapshot = Snapshot()
 
     def execution(self):
         args_list = []
@@ -237,7 +259,7 @@ class Node:
 
     # after 1 hour of uptime, save snapshot to s3
 
-    def run(self):
+    def start(self):
         processes = [
             {
                 'process': self.execution(),
@@ -248,24 +270,55 @@ class Node:
                 'prefix': "[[[ CONSENSUS ]]]"
             }
         ]
-        sent_signal = False
-        start = time()
         for meta in processes:
             processes[meta]['stdout'] = iter(
                 meta['process'].stdout.readline, b'')
 
-        def print_line(prefix, stdout):
-            line = stdout.__next__().decode('UTF-8').strip()
-            print(f"{prefix} {line}")
+        self.processes = processes
+        return processes
+
+    def interrupt(self):
+        for meta in self.processes:
+            os.kill(meta['process'].pid, signal.SIGINT)
+
+    def kill(self):
+        pass
+
+    def print_line(self, prefix, stdout):
+        line = stdout.__next__().decode('UTF-8').strip()
+        print(f"{prefix} {line}")
+
+    def run(self):
+        self.start()
+        sent_signal = False
+        start = time()
+        since_signal = time()
 
         while True:
             now = time()
             if now - start > 120 and not sent_signal:
-                for meta in processes:
-                    os.kill(meta['process'].pid, signal.SIGINT)
+                self.interrupt()
+                since_signal = time()
                 sent_signal = True
-            for meta in processes:
-                print_line(meta['prefix'], meta['stdout'])
+            for meta in self.processes:
+                self.print_line(meta['prefix'], meta['stdout'])
+            # NEED TO WAIT 5-10 sec and then test if pid is still active
+        # if it is, then kill -9
+
+        # create the ability to register a polling event
+        # like register(fx, 5) means do this every 5 seconds
+        # or list of fx => [{'fx': pass, 'interval': 5 or 'delta': timedelta, 'last_time_checked': now}]
+        # and then only fire off fx when now - last_time_checked > delta
+        # essentially this function should be
+        # - self.snapshot.backup()
+        # - while True:
+        #       start_to_stop()
+        #       self.snapshot.backup()
+        #       stop_to_start()
+
+        # wait better idea
+        # on init, get self.snapshot.get_snapshots()
+        #
 
 
 Node().run()
