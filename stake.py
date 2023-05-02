@@ -240,19 +240,19 @@ class Node:
     def run(self):
         processes = [
             {
-                'process': self.execution()
-
+                'process': self.execution(),
+                'prefix': '<<< EXECUTION >>>'
             },
             {
-                'process': self.consensus()
+                'process': self.consensus(),
+                'prefix': "[[[ CONSENSUS ]]]"
             }
         ]
-        p1 = self.execution()
-        p2 = self.consensus()
         sent_signal = False
         start = time()
-        p1_out = iter(p1.stdout.readline, b'')
-        p2_out = iter(p2.stdout.readline, b'')
+        for meta in processes:
+            processes[meta]['stdout'] = iter(
+                meta['process'].stdout.readline, b'')
 
         def print_line(prefix, stdout):
             line = stdout.__next__().decode('UTF-8').strip()
@@ -261,11 +261,11 @@ class Node:
         while True:
             now = time()
             if now - start > 120 and not sent_signal:
-                os.kill(p1.pid, signal.SIGINT)
-                os.kill(p2.pid, signal.SIGINT)
+                for meta in processes:
+                    os.kill(meta['process'].pid, signal.SIGINT)
                 sent_signal = True
-            print_line("<<< EXECUTION >>>", p1_out)
-            print_line("[[[ CONSENSUS ]]]", p2_out)
+            for meta in processes:
+                print_line(meta['prefix'], meta['stdout'])
 
 
 Node().run()
