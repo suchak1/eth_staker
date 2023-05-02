@@ -15,9 +15,9 @@ ENV PRYSM_DIR "${CONS_DIR}/prysm"
 RUN apt-get update && \
     apt-get install -y python3 git curl bash python3-pip
 
-RUN python3 -m venv "${ETH_DIR}" --without-pip --system-site-packages && \
-    . "${ETH_DIR}/bin/activate" && \
-    python3 -m pip install boto3
+RUN python3 -m venv "${ETH_DIR}" --without-pip --system-site-packages
+ENV PATH "${ETH_DIR}/bin:${PATH}"
+RUN python3 -m pip install boto3
 
 # # Download geth (execution)
 RUN mkdir -p "${EXEC_DIR}"
