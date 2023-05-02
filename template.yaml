@@ -51,6 +51,12 @@ Resources:
                 Resource: '*'
               - Effect: Allow
                 Action: 
+                  - 'ec2:CreateTags'
+                  # prob describe tags
+                  # maybe delete?
+                Resource: !Sub 'arn:aws:ec2:${AWS::Region}::snapshot/*'
+              - Effect: Allow
+                Action: 
                   - 'ssm:PutParameter'
                 Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Stage}_staking_snapshot'
       RoleName: !Sub "${Stage}StakingTaskRole"

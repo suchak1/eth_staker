@@ -55,6 +55,7 @@ def snapshot():
             }
         ]
     )
+    # put snapshot id in ssm - param name in template.yaml
     # delete all snapshots older than 90 days
 
 
