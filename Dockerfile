@@ -16,6 +16,7 @@ RUN apt-get update && \
     apt-get install -y python3 git curl bash python3-pip
 
 RUN python3 -m venv "${ETH_DIR}" --without-pip --system-site-packages
+# Use virtual env as default python path
 ENV PATH "${ETH_DIR}/bin:${PATH}"
 RUN python3 -m pip install boto3
 
