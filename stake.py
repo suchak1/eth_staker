@@ -8,8 +8,7 @@ from glob import glob
 from datetime import datetime, timedelta
 
 deploy_env = os.environ['DEPLOY_ENV']
-
-
+is_dev = deploy_env.lower() == 'dev'
 home_dir = os.path.expanduser("~")
 
 platform = sys.platform.lower()
@@ -18,19 +17,6 @@ platform = sys.platform.lower()
 def get_env_bool(var_name):
     return bool(os.environ.get(var_name)
                 and os.environ[var_name].lower() == 'true')
-
-
-AWS = get_env_bool('AWS')
-on_mac = platform == 'darwin'
-geth_dir_base = 'Library/Ethereum' if on_mac else '.ethereum'
-prysm_dir_base = 'Library/Eth2' if on_mac else '.eth2'
-
-prefix = f"{'/mnt/ebs' if AWS else home_dir}/"
-geth_data_dir = f"{prefix}{geth_dir_base}"
-prysm_data_dir = f"{prefix}{prysm_dir_base}"
-
-ipc_postfix = f"{'/goerli' if deploy_env == 'dev' else ''}/geth.ipc"
-ipc_path = geth_data_dir + ipc_postfix
 
 
 class Snapshot:
@@ -178,80 +164,97 @@ class Snapshot:
 #     DataType='string'
 # )
 
+class Node:
+    def __init__(self):
+        self.AWS = get_env_bool('AWS')
+        on_mac = platform == 'darwin'
+        geth_dir_base = 'Library/Ethereum' if on_mac else '.ethereum'
+        prysm_dir_base = 'Library/Eth2' if on_mac else '.eth2'
 
-def run_execution():
-    args_list = []
+        prefix = f"{'/mnt/ebs' if self.AWS else home_dir}/"
+        self.geth_data_dir = f"{prefix}{geth_dir_base}"
+        self.prysm_data_dir = f"{prefix}{prysm_dir_base}"
 
-    if deploy_env == 'dev':
-        args_list.append("--goerli")
-    else:
-        args_list.append("--mainnet")
+        ipc_postfix = f"{'/goerli' if is_dev else ''}/geth.ipc"
+        self.ipc_path = self.geth_data_dir + ipc_postfix
 
-    if AWS:
-        args_list.append(f"--datadir {geth_data_dir}")
+    def execution(self):
+        args_list = []
 
-    default_args = ['--http', '--http.api', 'eth,net,engine,admin']
-    args = " ".join(args_list + default_args)
-    proc = subprocess.Popen(
-        # change this back to .geth or get geth in PATH bin in dockerfile
-        f'geth {args}',
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT
-    )
-    sent_signal = False
-    now = time()
-    for line in iter(proc.stdout.readline, b''):
-        if time() - now > 15 and not sent_signal:
-            os.kill(proc.pid, signal.SIGINT)
-            sent_signal = True
-            # THIS works! w/o "cd &&"
-            # to get this working in docker,
-            # must put geth, beacon-chain, validator, and prysm-ctl in PATH in Dockerfile
-        print("[[ EXECUTION ]]" + line.decode('UTF-8').strip())
-    retval = proc.wait()
-    # USE SIGINT FOR GETH
-    # kill -2 INSERT_GETH_PID_HERE
-    # kill SIGINT INSERT_GETH_PID_HERE
-    # correct PID command starts with "./geth" in ps aux NOT "cd execution &&"
-    # killing even with SIGINT (soft) will cause python process to crash (even if geth exits gracefully)
+        if is_dev:
+            args_list.append("--goerli")
+        else:
+            args_list.append("--mainnet")
+
+        if self.AWS:
+            args_list.append(f"--datadir {self.geth_data_dir}")
+
+        default_args = ['--http', '--http.api', 'eth,net,engine,admin']
+        args = " ".join(args_list + default_args)
+        process = subprocess.Popen(
+            # change this back to .geth or get geth in PATH bin in dockerfile
+            f'geth {args}',
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+        )
+        return process
+        # USE SIGINT FOR GETH
+        # kill -2 INSERT_GETH_PID_HERE
+        # kill SIGINT INSERT_GETH_PID_HERE
+        # correct PID command starts with "./geth" in ps aux NOT "cd execution &&"
+        # killing even with SIGINT (soft) will cause python process to crash (even if geth exits gracefully)
+
+    def consensus(self):
+        args_list = [
+            '--accept-terms-of-use',
+            f'--execution-endpoint={self.ipc_path}'
+        ]
+
+        if is_dev:
+            args_list.append("--prater")
+            args.list.append("--genesis-state=genesis.ssz")
+
+        if self.AWS:
+            args_list.append(f"--datadir {self.prysm_data_dir}")
+
+        state_filename = glob('state*.ssz')[0]
+        block_filename = glob('block*.ssz')[0]
+        default_args = [
+            f'--checkpoint-state={state_filename}',
+            f'--checkpoint-block={block_filename}',
+            '--suggested-fee-recipient=ETH_WALLET_ADDR_HERE!'
+        ]
+        args = " ".join(args_list + default_args)
+        process = subprocess.Popen(
+            f'beacon-chain {args}',
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+        )
+        return process
+        # DO RESEARCH FOR BEST SIGNAL TO KILL PRYSM
+
+    # after 1 hour of uptime, save snapshot to s3
+
+    def run(self):
+        proc1 = self.execution()
+        proc2 = self.consensus()
+        sent_signal = False
+        start = time()
+        proc1_output = iter(proc1.stdout.readline, b'')
+        proc2_output = iter(proc2.stdout.readline, b'')
+
+        while True:
+            now = time()
+            if now - start > 120 and not sent_signal:
+                os.kill(proc1.pid, signal.SIGINT)
+                os.kill(proc2.pid, signal.SIGINT)
+                sent_signal = True
+            print("<<< EXECUTION >>> " +
+                  proc1_output.__next__().decode('UTF-8').strip())
+            print("[[[ CONSENSUS ]]] " +
+                  proc2_output.__next__().decode('UTF-8').strip())
 
 
-def run_consensus():
-    args_list = [
-        '--accept-terms-of-use',
-        f'--execution-endpoint={ipc_path}'
-    ]
-
-    if deploy_env == 'dev':
-        args_list.append("--prater")
-        args.list.append("--genesis-state=genesis.ssz")
-
-    if AWS:
-        args_list.append(f"--datadir {prysm_data_dir}")
-
-    state_filename = glob('state*.ssz')[0]
-    block_filename = glob('block*.ssz')[0]
-    default_args = [
-        f'--checkpoint-state={state_filename}',
-        f'--checkpoint-block={block_filename}',
-        '--suggested-fee-recipient=ETH_WALLET_ADDR_HERE!'
-    ]
-    args = " ".join(args_list + default_args)
-    proc = subprocess.Popen(
-        f'cd consensus && ./beacon-chain {args}',
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT
-    )
-    for line in iter(proc.stdout.readline, b''):
-        print("[[ CONSENSUS ]]" + line.decode('UTF-8').strip())
-
-    retval = proc.wait()
-
-    # DO RESEARCH FOR BEST SIGNAL TO KILL PRYSM
-
-# after 1 hour of uptime, save snapshot to s3
-
-
-run_execution()
+Node().run()
