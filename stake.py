@@ -1,6 +1,8 @@
 import os
 import sys
 import boto3
+import signal
+from time import time
 import subprocess
 from glob import glob
 from datetime import datetime, timedelta
@@ -191,14 +193,28 @@ def run_execution():
     default_args = ['--http', '--http.api', 'eth,net,engine,admin']
     args = " ".join(args_list + default_args)
     proc = subprocess.Popen(
-        f'cd execution && ./geth {args}',
+        # change this back to .geth or get geth in PATH bin in dockerfile
+        f'geth {args}',
         shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT
     )
+    sent_signal = False
+    now = time()
     for line in iter(proc.stdout.readline, b''):
+        if time() - now > 15 and not sent_signal:
+            os.kill(proc.pid, signal.SIGINT)
+            sent_signal = True
+            # THIS works! w/o "cd &&"
+            # to get this working in docker,
+            # must put geth, beacon-chain, validator, and prysm-ctl in PATH in Dockerfile
         print("[[ EXECUTION ]]" + line.decode('UTF-8').strip())
     retval = proc.wait()
+    # USE SIGINT FOR GETH
+    # kill -2 INSERT_GETH_PID_HERE
+    # kill SIGINT INSERT_GETH_PID_HERE
+    # correct PID command starts with "./geth" in ps aux NOT "cd execution &&"
+    # killing even with SIGINT (soft) will cause python process to crash (even if geth exits gracefully)
 
 
 def run_consensus():
@@ -230,7 +246,10 @@ def run_consensus():
     )
     for line in iter(proc.stdout.readline, b''):
         print("[[ CONSENSUS ]]" + line.decode('UTF-8').strip())
+
     retval = proc.wait()
+
+    # DO RESEARCH FOR BEST SIGNAL TO KILL PRYSM
 
 # after 1 hour of uptime, save snapshot to s3
 
