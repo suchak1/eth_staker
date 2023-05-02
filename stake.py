@@ -238,23 +238,34 @@ class Node:
     # after 1 hour of uptime, save snapshot to s3
 
     def run(self):
-        proc1 = self.execution()
-        proc2 = self.consensus()
+        processes = [
+            {
+                'process': self.execution()
+
+            },
+            {
+                'process': self.consensus()
+            }
+        ]
+        p1 = self.execution()
+        p2 = self.consensus()
         sent_signal = False
         start = time()
-        proc1_output = iter(proc1.stdout.readline, b'')
-        proc2_output = iter(proc2.stdout.readline, b'')
+        p1_out = iter(p1.stdout.readline, b'')
+        p2_out = iter(p2.stdout.readline, b'')
+
+        def print_line(prefix, stdout):
+            line = stdout.__next__().decode('UTF-8').strip()
+            print(f"{prefix} {line}")
 
         while True:
             now = time()
             if now - start > 120 and not sent_signal:
-                os.kill(proc1.pid, signal.SIGINT)
-                os.kill(proc2.pid, signal.SIGINT)
+                os.kill(p1.pid, signal.SIGINT)
+                os.kill(p2.pid, signal.SIGINT)
                 sent_signal = True
-            print("<<< EXECUTION >>> " +
-                  proc1_output.__next__().decode('UTF-8').strip())
-            print("[[[ CONSENSUS ]]] " +
-                  proc2_output.__next__().decode('UTF-8').strip())
+            print_line("<<< EXECUTION >>>", p1_out)
+            print_line("[[[ CONSENSUS ]]]", p2_out)
 
 
 Node().run()
