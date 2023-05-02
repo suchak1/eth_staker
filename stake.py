@@ -3,6 +3,7 @@ import sys
 import boto3
 import subprocess
 from glob import glob
+from datetime import datetime, timedelta
 
 deploy_env = os.environ['DEPLOY_ENV']
 
@@ -37,21 +38,43 @@ class Snapshot:
         self.ec2 = boto3.client('ec2')
         self.volume_id = self.get_volume_id()
 
-    def snapshot_is_older_than(snapshot, num_days):
-        pass
+    def is_older_than(snapshot, num_days):
+        created = snapshot['StartTime'].replace(tzinfo=None)
+        now = datetime.utcnow()
+        actual_delta = now - created
+        max_delta = timedelta(days=num_days)
+        return actual_delta > max_delta
 
     def create(self, curr_snapshots):
-        # only create snapshot if no snapshots list is empty OR newest snapshot is older than 30 days
-        self.ec2.create_snapshot(
-            VolumeId=self.volume_id,
-            TagSpecifications=[
-                {
-                    'ResourceType': 'snapshot',
-                    'Tags': [{'Key': 'type', 'Value': self.tag}]
-                }
-            ]
+        all_snapshots_are_old = all(
+            [self.is_older_than(snapshot, 30) for snapshot in curr_snapshots]
         )
-    # ssm
+        if all_snapshots_are_old:
+            snapshot = self.ec2.create_snapshot(
+                VolumeId=self.volume_id,
+                TagSpecifications=[
+                    {
+                        'ResourceType': 'snapshot',
+                        'Tags': [{'Key': 'type', 'Value': self.tag}]
+                    }
+                ]
+            )
+            ssm = boto3.client('ssm')
+            ssm.put_parameter(
+                Name=self.tag,
+                Value=snapshot['SnapshotId'],
+                Type='String',
+                Overwrite=True,
+                Tags=[
+                     {
+                         'Key': 'string',
+                         'Value': 'string'
+                     },
+                ],
+                Tier='Standard',
+                DataType='text'
+            )
+            return snapshot
 
     def get_volume_id(self):
         with open('/mnt/ebs/VOLUME_ID', 'r') as file:
@@ -74,33 +97,22 @@ class Snapshot:
     def purge(self, curr_snapshots):
         # delete all snapshots older than 90 days and that have tag
         # for loop bc can't delete multiple in one req
+        purgeable = [
+            snapshot for snapshot in curr_snapshots if self.is_older_than(snapshot, 90)
+        ]
 
-        snapshots = self.ec2.describe_snapshots(
-            Filters=[
-                {
-                    'Name': 'tag:type',
-                    'Values': [self.tag]
-                },
-            ],
-            OwnerIds=['self'],
-        )['Snapshots']
-        self.ec2.delete_snapshot(
-            SnapshotId='snapshot_id_here',
-        )
+        for snapshot in purgeable:
+            # TODO: test if snapshot is older than 90 days
+            self.ec2.delete_snapshot(
+                SnapshotId=snapshot['SnapshotId'],
+            )
 
+    def backup(self):
+        curr_snapshots = self.get_snapshots()
+        snapshot = self.create(curr_snapshots)
+        self.purge(curr_snapshots)
+        return snapshot
 
-def snapshot():
-    tag = f'{deploy_env}_staking_snapshot'
-    ec2 = boto3.client('ec2')
-    snapshots = ec2.describe_snapshots(
-        Filters=[
-            {
-                'Name': 'tag:type',
-                'Values': [tag]
-            },
-        ],
-        OwnerIds=['self'],
-    )['Snapshots']
 
 #   [
 #       {
