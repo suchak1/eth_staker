@@ -83,7 +83,7 @@ Resources:
             LogDriver: awslogs
             Options:
               awslogs-group: !Sub "/ecs/${Stage}_eth_staker"
-              awslogs-region: !Ref AWS::Region,
+              awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix": "ecs"
       Cpu: 512
       ExecutionRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole"
