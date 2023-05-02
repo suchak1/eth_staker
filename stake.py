@@ -35,18 +35,30 @@ class Snapshot:
     def __init__(self) -> None:
         self.tag = f'{deploy_env}_staking_snapshot'
         self.ec2 = boto3.client('ec2')
+        self.volume_id = self.get_volume_id()
 
-    def create(self):
-
-        # ssm
+    def snapshot_is_older_than(snapshot, num_days):
         pass
+
+    def create(self, curr_snapshots):
+        # only create snapshot if no snapshots list is empty OR newest snapshot is older than 30 days
+        self.ec2.create_snapshot(
+            VolumeId=self.volume_id,
+            TagSpecifications=[
+                {
+                    'ResourceType': 'snapshot',
+                    'Tags': [{'Key': 'type', 'Value': self.tag}]
+                }
+            ]
+        )
+    # ssm
 
     def get_volume_id(self):
         with open('/mnt/ebs/VOLUME_ID', 'r') as file:
             volume_id = file.read().strip()
         return volume_id
 
-    def purge(self):
+    def get_snapshots(self):
         snapshots = self.ec2.describe_snapshots(
             Filters=[
                 {
@@ -56,6 +68,25 @@ class Snapshot:
             ],
             OwnerIds=['self'],
         )['Snapshots']
+
+        return snapshots
+
+    def purge(self, curr_snapshots):
+        # delete all snapshots older than 90 days and that have tag
+        # for loop bc can't delete multiple in one req
+
+        snapshots = self.ec2.describe_snapshots(
+            Filters=[
+                {
+                    'Name': 'tag:type',
+                    'Values': [self.tag]
+                },
+            ],
+            OwnerIds=['self'],
+        )['Snapshots']
+        self.ec2.delete_snapshot(
+            SnapshotId='snapshot_id_here',
+        )
 
 
 def snapshot():
@@ -86,19 +117,6 @@ def snapshot():
 #           'VolumeSize': 500
 #       }
 #   ]
-    with open('/mnt/ebs/VOLUME_ID', 'r') as file:
-        volume_id = file.read().strip()
-    # figure out why unauthorized
-    # only create snapshot if no snapshots list is empty OR newest snapshot is older than 30 days
-    ec2.create_snapshot(
-        VolumeId=volume_id,
-        TagSpecifications=[
-            {
-                'ResourceType': 'snapshot',
-                'Tags': [{'Key': 'type', 'Value': tag}]
-            }
-        ]
-    )
 
     # {
     #   'Description': '',
@@ -145,11 +163,6 @@ def snapshot():
 #     Policies='string',
 #     DataType='string'
 # )
-    # delete all snapshots older than 90 days and that have tag
-    # for loop bc can't delete multiple in one req
-    ec2.delete_snapshot(
-        SnapshotId='snapshot_id_here',
-    )
 
 
 def run_execution():
