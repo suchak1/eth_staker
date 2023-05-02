@@ -30,6 +30,34 @@ ipc_postfix = f"{'/goerli' if deploy_env == 'dev' else ''}/geth.ipc"
 ipc_path = geth_data_dir + ipc_postfix
 
 
+class Snapshot:
+    # or Backup
+    def __init__(self) -> None:
+        self.tag = f'{deploy_env}_staking_snapshot'
+        self.ec2 = boto3.client('ec2')
+
+    def create(self):
+
+        # ssm
+        pass
+
+    def get_volume_id(self):
+        with open('/mnt/ebs/VOLUME_ID', 'r') as file:
+            volume_id = file.read().strip()
+        return volume_id
+
+    def purge(self):
+        snapshots = self.ec2.describe_snapshots(
+            Filters=[
+                {
+                    'Name': 'tag:type',
+                    'Values': [self.tag]
+                },
+            ],
+            OwnerIds=['self'],
+        )['Snapshots']
+
+
 def snapshot():
     tag = f'{deploy_env}_staking_snapshot'
     ec2 = boto3.client('ec2')
@@ -42,6 +70,22 @@ def snapshot():
         ],
         OwnerIds=['self'],
     )['Snapshots']
+
+#   [
+#       {
+#           'Description': '',
+#           'Encrypted': False,
+#           'OwnerId': '092475342352',
+#           'Progress': '100%',
+#           'SnapshotId': 'snap-0459c369f239bbc16',
+#           'StartTime': datetime.datetime(2023, 5, 2, 5, 28, 48, 346000, tzinfo=tzlocal()),
+#           'State': 'completed',
+#           'StorageTier': 'standard',
+#           'Tags': [{'Key': 'type', 'Value': 'dev_staking_snapshot'}],
+#           'VolumeId': 'vol-0032571a64af1e052',
+#           'VolumeSize': 500
+#       }
+#   ]
     with open('/mnt/ebs/VOLUME_ID', 'r') as file:
         volume_id = file.read().strip()
     # figure out why unauthorized
@@ -55,8 +99,57 @@ def snapshot():
             }
         ]
     )
+
+    # {
+    #   'Description': '',
+    #   'Encrypted': False,
+    #   'OwnerId': '092475342352',
+    #   'Progress': '',
+    #   'SnapshotId': 'snap-0459c369f239bbc16',
+    #   'StartTime': datetime.datetime(2023, 5, 2, 5, 28, 48, 346000, tzinfo=tzlocal()),
+    # # 5/2/2023 01:28:48 am EST
+    #   'State': 'pending',
+    #   'VolumeId': 'vol-0032571a64af1e052',
+    #   'VolumeSize': 500,
+    #   'Tags': [{'Key': 'type', 'Value': 'dev_staking_snapshot'}],
+    #   'ResponseMetadata': {
+    #       'RequestId': '3fd16dcb-ae03-4fc7-b013-fbd8468b4f66',
+    #       'HTTPStatusCode': 200,
+    #       'HTTPHeaders': {
+    #           'x-amzn-requestid': '3fd16dcb-ae03-4fc7-b013-fbd8468b4f66',
+    #           'cache-control': 'no-cache, no-store',
+    #           'strict-transport-security': 'max-age=31536000; includeSubDomains',
+    #           'content-type': 'text/xml;charset=UTF-8',
+    #           'content-length': '677',
+    #           'date': 'Tue, 02 May 2023 05:28:48 GMT',
+    #           'server': 'AmazonEC2'
+    #       },
+    #   'RetryAttempts': 0}
+    # }
     # put snapshot id in ssm - param name in template.yaml
-    # delete all snapshots older than 90 days
+#     response = client.put_parameter(
+#     Name='string',
+#     Description='string',
+#     Value='string',
+#     Type='String'|'StringList'|'SecureString',
+#     KeyId='string',
+#     Overwrite=True|False,
+#     AllowedPattern='string',
+#     Tags=[
+#         {
+#             'Key': 'string',
+#             'Value': 'string'
+#         },
+#     ],
+#     Tier='Standard'|'Advanced'|'Intelligent-Tiering',
+#     Policies='string',
+#     DataType='string'
+# )
+    # delete all snapshots older than 90 days and that have tag
+    # for loop bc can't delete multiple in one req
+    ec2.delete_snapshot(
+        SnapshotId='snapshot_id_here',
+    )
 
 
 def run_execution():
