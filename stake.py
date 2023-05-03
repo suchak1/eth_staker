@@ -59,12 +59,6 @@ class Snapshot:
                 Value=snapshot['SnapshotId'],
                 Type='String',
                 Overwrite=True,
-                Tags=[
-                     {
-                         'Key': 'string',
-                         'Value': 'string'
-                     },
-                ],
                 Tier='Standard',
                 DataType='text'
             )
@@ -258,15 +252,16 @@ class Node:
                         self.print_line(meta['prefix'], meta['stdout'])
             except:
                 pass
-
+            # <--------------- move to except block? ------------------>
             sleep(5)
             self.terminate()
             sleep(5)
             self.kill()
 
             # NEED TO WAIT 5-10 sec and then test if pid is still active
-        # if it is, then kill -9
+            # if it is, then kill -9
             self.most_recent = self.snapshot.backup()
+            # <--------------- move to except block? ------------------>
 
         # create the ability to register a polling event
         # like register(fx, 5) means do this every 5 seconds
