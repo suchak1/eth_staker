@@ -199,6 +199,7 @@ class Node:
         ipc_postfix = f"{'/goerli' if is_dev else ''}/geth.ipc"
         self.ipc_path = self.geth_data_dir + ipc_postfix
         self.snapshot = Snapshot()
+        self.most_recent = self.snapshot.backup()
 
     def execution(self):
         args_list = []
@@ -318,7 +319,25 @@ class Node:
 
         # wait better idea
         # on init, get self.snapshot.get_snapshots()
+        # jk
+
+        # run
+        # self.start()
+        # backup_is_recent = True
+        # while True:
+        #   backup_is_recent = not self.snapshot.is_older_than(self.most_recent, snapshot_days)
+        #   sent_interrupt = False
+        #   while True:
+        #       if not backup_is_recent and not sent_interrupt:
+        #           self.interrupt()
+        #        #  since_signal = time()
+        #           sent_interrupt = True
+        #       print logs
+        #       if
+
         #
+
+        # self.most_recent = self.snapshot.backup()
 
 
 Node().run()
