@@ -210,7 +210,7 @@ class Node:
             # }
         ]
         for meta in processes:
-            processes[meta]['stdout'] = iter(
+            meta['stdout'] = iter(
                 meta['process'].stdout.readline, b'')
 
         self.processes = processes
