@@ -148,14 +148,14 @@ class Node:
             args_list.append("--mainnet")
 
         if self.AWS:
-            args_list.append(f"--datadir {self.geth_data_dir}")
+            args_list += ["--datadir", self.geth_data_dir]
 
         default_args = ['--http', '--http.api', 'eth,net,engine,admin']
-        args = " ".join(args_list + default_args)
+        args = args_list + default_args
         process = subprocess.Popen(
             # change this back to .geth or get geth in PATH bin in dockerfile
-            f'geth {args}',
-            shell=True,
+            ['./geth'] + args,
+            shell=False,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
         )
@@ -177,7 +177,7 @@ class Node:
             args.list.append("--genesis-state=genesis.ssz")
 
         if self.AWS:
-            args_list.append(f"--datadir {self.prysm_data_dir}")
+            args_list += ["--datadir", self.prysm_data_dir]
 
         state_filename = glob('state*.ssz')[0]
         block_filename = glob('block*.ssz')[0]
@@ -186,10 +186,10 @@ class Node:
             f'--checkpoint-block={block_filename}',
             '--suggested-fee-recipient=ETH_WALLET_ADDR_HERE!'
         ]
-        args = " ".join(args_list + default_args)
+        args = args_list + default_args
         process = subprocess.Popen(
-            f'beacon-chain {args}',
-            shell=True,
+            ['./beacon-chain'] + args,
+            shell=False,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
         )
@@ -204,10 +204,10 @@ class Node:
                 'process': self.execution(),
                 'prefix': '<<< EXECUTION >>>'
             },
-            {
-                'process': self.consensus(),
-                'prefix': "[[[ CONSENSUS ]]]"
-            }
+            # {
+            #     'process': self.consensus(),
+            #     'prefix': "[[[ CONSENSUS ]]]"
+            # }
         ]
         for meta in processes:
             processes[meta]['stdout'] = iter(
