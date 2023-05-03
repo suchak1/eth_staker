@@ -2,7 +2,7 @@ import os
 import sys
 import boto3
 import signal
-from time import time
+from time import sleep
 import subprocess
 from glob import glob
 from datetime import datetime, timedelta
@@ -123,68 +123,6 @@ class Snapshot:
         return snapshot or self.find_most_recent(curr_snapshots)
 
 
-#   [
-#       {
-#           'Description': '',
-#           'Encrypted': False,
-#           'OwnerId': '092475342352',
-#           'Progress': '100%',
-#           'SnapshotId': 'snap-0459c369f239bbc16',
-#           'StartTime': datetime.datetime(2023, 5, 2, 5, 28, 48, 346000, tzinfo=tzlocal()),
-#           'State': 'completed',
-#           'StorageTier': 'standard',
-#           'Tags': [{'Key': 'type', 'Value': 'dev_staking_snapshot'}],
-#           'VolumeId': 'vol-0032571a64af1e052',
-#           'VolumeSize': 500
-#       }
-#   ]
-
-    # {
-    #   'Description': '',
-    #   'Encrypted': False,
-    #   'OwnerId': '092475342352',
-    #   'Progress': '',
-    #   'SnapshotId': 'snap-0459c369f239bbc16',
-    #   'StartTime': datetime.datetime(2023, 5, 2, 5, 28, 48, 346000, tzinfo=tzlocal()),
-    # # 5/2/2023 01:28:48 am EST
-    #   'State': 'pending',
-    #   'VolumeId': 'vol-0032571a64af1e052',
-    #   'VolumeSize': 500,
-    #   'Tags': [{'Key': 'type', 'Value': 'dev_staking_snapshot'}],
-    #   'ResponseMetadata': {
-    #       'RequestId': '3fd16dcb-ae03-4fc7-b013-fbd8468b4f66',
-    #       'HTTPStatusCode': 200,
-    #       'HTTPHeaders': {
-    #           'x-amzn-requestid': '3fd16dcb-ae03-4fc7-b013-fbd8468b4f66',
-    #           'cache-control': 'no-cache, no-store',
-    #           'strict-transport-security': 'max-age=31536000; includeSubDomains',
-    #           'content-type': 'text/xml;charset=UTF-8',
-    #           'content-length': '677',
-    #           'date': 'Tue, 02 May 2023 05:28:48 GMT',
-    #           'server': 'AmazonEC2'
-    #       },
-    #   'RetryAttempts': 0}
-    # }
-    # put snapshot id in ssm - param name in template.yaml
-#     response = client.put_parameter(
-#     Name='string',
-#     Description='string',
-#     Value='string',
-#     Type='String'|'StringList'|'SecureString',
-#     KeyId='string',
-#     Overwrite=True|False,
-#     AllowedPattern='string',
-#     Tags=[
-#         {
-#             'Key': 'string',
-#             'Value': 'string'
-#         },
-#     ],
-#     Tier='Standard'|'Advanced'|'Intelligent-Tiering',
-#     Policies='string',
-#     DataType='string'
-# )
-
 class Node:
     def __init__(self):
         self.AWS = get_env_bool('AWS')
@@ -278,33 +216,57 @@ class Node:
         self.processes = processes
         return processes
 
-    def interrupt(self):
+    def signal_processes(self, sig):
         for meta in self.processes:
-            os.kill(meta['process'].pid, signal.SIGINT)
+            os.kill(meta['process'].pid, sig)
+
+    def interrupt(self):
+        self.signal_processes(signal.SIGINT)
+
+    def terminate(self):
+        try:
+            self.signal_processes(signal.SIGTERM)
+        except:
+            pass
 
     def kill(self):
-        pass
+        try:
+            self.signal_processes(signal.SIGKILL)
+        except:
+            pass
 
     def print_line(self, prefix, stdout):
         line = stdout.__next__().decode('UTF-8').strip()
         print(f"{prefix} {line}")
 
     def run(self):
-        self.start()
-        sent_signal = False
-        start = time()
-        since_signal = time()
-
         while True:
-            now = time()
-            if now - start > 120 and not sent_signal:
-                self.interrupt()
-                since_signal = time()
-                sent_signal = True
-            for meta in self.processes:
-                self.print_line(meta['prefix'], meta['stdout'])
+            self.start()
+            backup_is_recent = True
+            sent_interrupt = False
+            # start = time()
+            # since_signal = time()
+            try:
+                while True:
+                    if self.snapshot.is_older_than(self.most_recent, 30):
+                        backup_is_recent = False
+                    if not backup_is_recent and not sent_interrupt:
+                        self.interrupt()
+                        # since_signal = time()
+                        sent_interrupt = True
+                    for meta in self.processes:
+                        self.print_line(meta['prefix'], meta['stdout'])
+            except:
+                pass
+
+            sleep(5)
+            self.terminate()
+            sleep(5)
+            self.kill()
+
             # NEED TO WAIT 5-10 sec and then test if pid is still active
         # if it is, then kill -9
+            self.most_recent = self.snapshot.backup()
 
         # create the ability to register a polling event
         # like register(fx, 5) means do this every 5 seconds
@@ -333,7 +295,6 @@ class Node:
         #        #  since_signal = time()
         #           sent_interrupt = True
         #       print logs
-        #       if
 
         #
 
