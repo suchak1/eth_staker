@@ -32,6 +32,8 @@ RUN tar -xvzf "${GETH_ARCHIVE}.tar.gz"
 RUN mv "${GETH_ARCHIVE}/geth" . && rm -rf "${GETH_ARCHIVE}"
 
 RUN chmod +x geth
+# Add geth to path
+ENV PATH "${PATH}:${EXEC_DIR}"
 
 # Download prysm (consensus)
 RUN mkdir -p "${PRYSM_DIR}"
@@ -42,6 +44,8 @@ RUN curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download
 RUN curl -Lo prysmctl "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/prysmctl-${PRYSM_VERSION}-${ARCH}"
 
 RUN chmod +x beacon-chain validator prysmctl
+# Add prysm to path
+ENV PATH "${PATH}:${PRYSM_DIR}"
 
 # Download consensus snapshot
 COPY "${PRYSM_DIR}/download_checkpoint.sh" .

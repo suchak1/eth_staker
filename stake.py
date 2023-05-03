@@ -154,7 +154,7 @@ class Node:
         args = args_list + default_args
         process = subprocess.Popen(
             # change this back to .geth or get geth in PATH bin in dockerfile
-            ['./geth'] + args,
+            ['geth'] + args,
             shell=False,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
@@ -188,7 +188,7 @@ class Node:
         ]
         args = args_list + default_args
         process = subprocess.Popen(
-            ['./beacon-chain'] + args,
+            ['beacon-chain'] + args,
             shell=False,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
