@@ -58,7 +58,6 @@ Resources:
               - Effect: Allow
                 Action: 
                   - 'ssm:PutParameter'
-                  - 'ssm:AddTagsToResource'
                 Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Stage}_staking_snapshot'
       RoleName: !Sub "${Stage}StakingTaskRole"
   TaskDefinition:

@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 deploy_env = os.environ['DEPLOY_ENV']
 is_dev = deploy_env.lower() == 'dev'
 home_dir = os.path.expanduser("~")
-
 platform = sys.platform.lower()
 
 
@@ -19,6 +18,7 @@ def get_env_bool(var_name):
                 and os.environ[var_name].lower() == 'true')
 
 
+AWS = get_env_bool('AWS')
 max_snapshots = 3
 snapshot_days = 30
 max_snapshot_days = max_snapshots * snapshot_days
@@ -29,7 +29,8 @@ class Snapshot:
     def __init__(self) -> None:
         self.tag = f'{deploy_env}_staking_snapshot'
         self.ec2 = boto3.client('ec2')
-        self.volume_id = self.get_volume_id()
+        if AWS:
+            self.volume_id = self.get_volume_id()
 
     def is_older_than(self, snapshot, num_days):
         created = self.get_snapshot_time(snapshot)
@@ -88,12 +89,13 @@ class Snapshot:
     def find_most_recent(self, curr_snapshots):
         if not curr_snapshots:
             return None
-        most_recent = self.get_snapshot_time(curr_snapshots[0])
-        for snapshot in curr_snapshots[1:]:
-            if self.get_snapshot_time(snapshot) > most_recent:
-                most_recent = snapshot
+        most_recent_idx = 0
+        self.get_snapshot_time(curr_snapshots[0])
+        for idx, snapshot in enumerate(curr_snapshots):
+            if self.get_snapshot_time(snapshot) > self.get_snapshot_time(curr_snapshots[most_recent_idx]):
+                most_recent_idx = idx
 
-        return most_recent
+        return curr_snapshots[most_recent_idx]
 
     def purge(self, curr_snapshots):
         # delete all snapshots older than 90 days and that have tag
@@ -105,7 +107,6 @@ class Snapshot:
         ]
 
         for snapshot in purgeable:
-            # TODO: test if snapshot is older than 90 days
             self.ec2.delete_snapshot(
                 SnapshotId=snapshot['SnapshotId'],
             )
@@ -119,12 +120,11 @@ class Snapshot:
 
 class Node:
     def __init__(self):
-        self.AWS = get_env_bool('AWS')
         on_mac = platform == 'darwin'
         geth_dir_base = 'Library/Ethereum' if on_mac else '.ethereum'
         prysm_dir_base = 'Library/Eth2' if on_mac else '.eth2'
 
-        prefix = f"{'/mnt/ebs' if self.AWS else home_dir}/"
+        prefix = f"{'/mnt/ebs' if AWS else home_dir}/"
         self.geth_data_dir = f"{prefix}{geth_dir_base}"
         self.prysm_data_dir = f"{prefix}{prysm_dir_base}"
 
@@ -141,7 +141,7 @@ class Node:
         else:
             args_list.append("--mainnet")
 
-        if self.AWS:
+        if AWS:
             args_list += ["--datadir", self.geth_data_dir]
 
         default_args = ['--http', '--http.api', 'eth,net,engine,admin']
@@ -170,7 +170,7 @@ class Node:
             args_list.append("--prater")
             args.list.append("--genesis-state=genesis.ssz")
 
-        if self.AWS:
+        if AWS:
             args_list += ["--datadir", self.prysm_data_dir]
 
         state_filename = glob('state*.ssz')[0]
@@ -250,8 +250,8 @@ class Node:
                         sent_interrupt = True
                     for meta in self.processes:
                         self.print_line(meta['prefix'], meta['stdout'])
-            except:
-                pass
+            except Exception as e:
+                print(e)
             # <--------------- move to except block? ------------------>
             sleep(5)
             self.terminate()
@@ -296,4 +296,19 @@ class Node:
         # self.most_recent = self.snapshot.backup()
 
 
-Node().run()
+node = Node()
+
+
+def stop_node(node):
+    node.interrupt()
+    sleep(3)
+    node.terminate()
+    sleep(3)
+    print('Node stopped.')
+    exit(0)
+
+
+signal.signal(signal.SIGINT, stop_node(node))
+signal.signal(signal.SIGTERM, stop_node(node))
+signal.signal(signal.SIGKILL, stop_node(node))
+node.run()
