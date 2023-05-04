@@ -162,7 +162,7 @@ class Node:
 
         if is_dev:
             args_list.append("--prater")
-            args.list.append("--genesis-state=genesis.ssz")
+            args_list.append("--genesis-state=genesis.ssz")
 
         if AWS:
             args_list += ["--datadir", self.prysm_data_dir]
@@ -172,7 +172,7 @@ class Node:
         default_args = [
             f'--checkpoint-state={state_filename}',
             f'--checkpoint-block={block_filename}',
-            '--suggested-fee-recipient=ETH_WALLET_ADDR_HERE!'
+            # '--suggested-fee-recipient=ETH_WALLET_ADDR_HERE!'
         ]
         args = args_list + default_args
         process = subprocess.Popen(
