@@ -299,7 +299,7 @@ class Node:
 node = Node()
 
 
-def stop_node(node):
+def stop_node():
     node.interrupt()
     sleep(3)
     node.terminate()
@@ -308,7 +308,7 @@ def stop_node(node):
     exit(0)
 
 
-signal.signal(signal.SIGINT, stop_node(node))
-signal.signal(signal.SIGTERM, stop_node(node))
-signal.signal(signal.SIGKILL, stop_node(node))
+signal.signal(signal.SIGINT, stop_node)
+signal.signal(signal.SIGTERM, stop_node)
+signal.signal(signal.SIGKILL, stop_node)
 node.run()
