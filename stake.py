@@ -271,7 +271,9 @@ node.run()
 
 # TODO:
 # - lock down ports - security best practices
+# https://docs.prylabs.network/docs/security-best-practices
 # - but make sure correct ports are open for each execution, consensus, validation
+# https://docs.prylabs.network/docs/prysm-usage/p2p-host-ip
 # - keep system clock up to date
 # - export metrics / have an easy way to monitor
 # - use arm64 if possible
