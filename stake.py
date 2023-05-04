@@ -128,11 +128,6 @@ class Node:
         self.geth_data_dir = f"{prefix}{geth_dir_base}${geth_dir_postfix}"
         self.prysm_data_dir = f"{prefix}{prysm_dir_base}"
 
-        current_dir = '.'
-        self.execution_dir = f"{current_dir}/execution"
-        self.consensus_dir = f"{current_dir}/consensus"
-        self.prysm_dir = './consensus/prysm'
-
         ipc_postfix = '/geth.ipc'
         self.ipc_path = self.geth_data_dir + ipc_postfix
         self.snapshot = Snapshot()
