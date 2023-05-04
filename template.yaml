@@ -108,7 +108,13 @@ Resources:
         SecurityGroupEgress: 
           - CidrIp: 0.0.0.0/0
             IpProtocol: -1
-        SecurityGroupIngress: 
+        SecurityGroupIngress:
+          # SSH 
+          - CidrIp: 0.0.0.0/0
+              IpProtocol: tcp
+              FromPort: 22
+              ToPort: 22
+          # Consensus
           - CidrIp: 0.0.0.0/0
             IpProtocol: tcp
             FromPort: 13000
@@ -117,6 +123,7 @@ Resources:
             IpProtocol: udp
             FromPort: 12000
             ToPort: 12000
+          # Execution
           - CidrIp: 0.0.0.0/0
             IpProtocol: tcp
             FromPort: 30303
