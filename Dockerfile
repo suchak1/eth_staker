@@ -49,12 +49,9 @@ ENV PATH "${PATH}:${PRYSM_DIR}"
 
 # Download consensus snapshot
 COPY "${PRYSM_DIR}/download_checkpoint.sh" .
+# Genesis block for goerli testnet
+COPY "${PRYSM_DIR}/genesis.ssz" .
 RUN bash download_checkpoint.sh
-
-# Use EBS for geth datadir
-# quit geth gracefully first, take EBS snapshot, restart geth
-# Make sure geth exits gracefully - parent process sends graceful kill signal to geth process
-# Lock down node - follow security best practices
 
 # Run app
 WORKDIR "${ETH_DIR}"

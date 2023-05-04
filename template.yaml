@@ -84,10 +84,11 @@ Resources:
             Options:
               awslogs-group: !Sub "/ecs/${Stage}_eth_staker"
               awslogs-region: !Ref AWS::Region
-      Cpu: 512
+      # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
+      # Cpu: 2048 # 2vCPUs
+      # Memory: 6144 # 6GB / 8GB
       ExecutionRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole"
       Family: !Sub "${Stage}_eth_staker"
-      Memory: 6144
       NetworkMode: bridge
       RequiresCompatibilities: 
         - EC2
@@ -112,10 +113,10 @@ Resources:
             IpProtocol: tcp
             FromPort: 22
             ToPort: 22
-          - CidrIp: 0.0.0.0/0
-            IpProtocol: tcp
-            FromPort: 80
-            ToPort: 80
+          # - CidrIp: 0.0.0.0/0
+          #   IpProtocol: tcp
+          #   FromPort: 80
+          #   ToPort: 80
         VpcId: !Ref VPC
   ECSCluster:
     Type: AWS::ECS::Cluster
@@ -270,12 +271,8 @@ Resources:
       LaunchTemplateName: !Sub "${Stage}_launch_template"
 
 # stop geth, beacon-node, and validators before taking snapshot
-# take snapshot every 1 month - check every hour and at start if snapshot doesn't exist or snapshot is older than 30 days
 # put snapshot id in ssm param
 # use resolve:ssm in cf for snapshotId in ebs config
-# after taking snapshot, delete snapshots that are older than 90 days
-# create new iam role that allows all permissions to do this
-# define role here in cf and attach to IamInstanceProfile or TaskExecutionRole in LaunchTemplate
 # restart geth, beacon-node, and validators
 
 # DO NOT ENABLE FAST RESTORE - V EXPENSIVE
