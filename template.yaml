@@ -24,11 +24,6 @@ Parameters:
   #   Type: "String"
   #   Default: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Stage}_staking_snapshot'
 
-Conditions:
-  UseSnapshot: !Equals 
-    - !Sub '{{resolve:ssm:${Stage}_staking_snapshot}}'
-    - !Ref AWS::NoValue
-
 Resources:
   TaskRole:
     Type: AWS::IAM::Role
@@ -224,11 +219,7 @@ Resources:
               # Iops: 10000
               # 10 - 15k is laptop/desktop SSD throughput
               # Throughput: 1000
-              SnapshotId:
-                'Fn::If':
-                  - UseSnapshot
-                  - !Sub '{{resolve:ssm:${Stage}_staking_snapshot}}'
-                  - !Ref AWS::NoValue
+              SnapshotId: !Sub '{{resolve:ssm:${Stage}_staking_snapshot}}'
                 # Condition: 
               # try defining cf param as ssm param val or 'default' / pseudo AWS::NoValue
               # https://www.jforte.me/posts/create-ebs-volume-snapshot-condtions-aws-cdk/
