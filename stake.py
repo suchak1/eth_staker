@@ -128,6 +128,11 @@ class Node:
         self.geth_data_dir = f"{prefix}{geth_dir_base}${geth_dir_postfix}"
         self.prysm_data_dir = f"{prefix}{prysm_dir_base}"
 
+        current_dir = '.'
+        self.execution_dir = f"{current_dir}/execution"
+        self.consensus_dir = f"{current_dir}/consensus"
+        self.prysm_dir = './consensus/prysm'
+
         ipc_postfix = '/geth.ipc'
         self.ipc_path = self.geth_data_dir + ipc_postfix
         self.snapshot = Snapshot()
@@ -160,15 +165,17 @@ class Node:
             f'--execution-endpoint={self.ipc_path}'
         ]
 
+        prysm_dir = './consensus/prysm'
+
         if is_dev:
             args_list.append("--prater")
-            args_list.append("--genesis-state=genesis.ssz")
+            args_list.append(f"--genesis-state={prysm_dir}/genesis.ssz")
 
         if AWS:
             args_list += ["--datadir", self.prysm_data_dir]
 
-        state_filename = glob('state*.ssz')[0]
-        block_filename = glob('block*.ssz')[0]
+        state_filename = glob(f'{prysm_dir}/state*.ssz')[0]
+        block_filename = glob(f'{prysm_dir}/block*.ssz')[0]
         default_args = [
             f'--checkpoint-state={state_filename}',
             f'--checkpoint-block={block_filename}',
@@ -225,6 +232,7 @@ class Node:
         print(f"{prefix} {line}")
 
     def run(self):
+
         while True:
             self.start()
             backup_is_recent = True
@@ -270,10 +278,11 @@ node.run()
 
 
 # TODO:
+# - set suggested fee address
 # - lock down ports - security best practices
 # https://docs.prylabs.network/docs/security-best-practices
-# - but make sure correct ports are open for each execution, consensus, validation
-# https://docs.prylabs.network/docs/prysm-usage/p2p-host-ip
+# - broadcast public dns
+# https://docs.prylabs.network/docs/prysm-usage/p2p-host-ip#broadcast-your-public-ip-address
 # - keep system clock up to date
 # - export metrics / have an easy way to monitor
 # - use arm64 if possible

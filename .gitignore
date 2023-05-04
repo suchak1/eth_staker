@@ -1,4 +1,5 @@
 task-definition.json
-ethereum
+consensus
+execution
 *.env
 .DS_Store
