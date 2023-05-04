@@ -28,6 +28,7 @@ class Snapshot:
     def __init__(self) -> None:
         self.tag = f'{deploy_env}_staking_snapshot'
         self.ec2 = boto3.client('ec2')
+        self.ssm = boto3.client('ssm')
         if AWS:
             self.volume_id = self.get_volume_id()
 
@@ -53,8 +54,7 @@ class Snapshot:
                     }
                 ]
             )
-            ssm = boto3.client('ssm')
-            res = ssm.put_parameter(
+            self.ssm.put_parameter(
                 Name=self.tag,
                 Value=snapshot['SnapshotId'],
                 Type='String',
@@ -62,7 +62,7 @@ class Snapshot:
                 Tier='Standard',
                 DataType='text'
             )
-            print(res)
+
             return snapshot
 
     def get_volume_id(self):
@@ -83,6 +83,23 @@ class Snapshot:
 
         return snapshots
 
+    def get_exceptions(self):
+        exceptions = set()
+        try:
+            # Add existing snapshot id from ssm
+            exceptions.add(self.ssm.get_parameter(
+                Name=self.tag)['Parameter']['Value'])
+        except:
+            pass
+
+        try:
+            # TODO: Add existing snapshot id from evaluated cf stack
+            pass
+        except:
+            pass
+
+        return exceptions
+
     def get_snapshot_time(self, snapshot):
         return snapshot['StartTime'].replace(tzinfo=None)
 
@@ -97,12 +114,12 @@ class Snapshot:
 
         return curr_snapshots[most_recent_idx]
 
-    def purge(self, curr_snapshots):
+    def purge(self, curr_snapshots, exceptions):
 
         purgeable = [
             snapshot for snapshot in curr_snapshots if self.is_older_than(
                 snapshot, max_snapshot_days
-            )
+            ) and snapshot['SnapshotId'] not in exceptions
         ]
 
         for snapshot in purgeable:
@@ -112,8 +129,9 @@ class Snapshot:
 
     def backup(self):
         curr_snapshots = self.get_snapshots()
+        exceptions = self.get_exceptions()
         snapshot = self.create(curr_snapshots)
-        self.purge(curr_snapshots)
+        self.purge(curr_snapshots, exceptions)
         return snapshot or self.find_most_recent(curr_snapshots)
 
 
@@ -274,7 +292,7 @@ node.run()
 
 # TODO:
 # - set suggested fee address
-# - lock down ports - security best practices
+# - security best practices
 # https://docs.prylabs.network/docs/security-best-practices
 # - broadcast public dns
 # https://docs.prylabs.network/docs/prysm-usage/p2p-host-ip#broadcast-your-public-ip-address
