@@ -107,7 +107,9 @@ Resources:
         GroupName: !Sub "${Stage}_staking_sg"
         SecurityGroupEgress: 
           - CidrIp: 0.0.0.0/0
-            IpProtocol: -1
+            IpProtocol: tcp
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: udp
         SecurityGroupIngress: 
           - CidrIp: 0.0.0.0/0
             IpProtocol: tcp
@@ -118,7 +120,11 @@ Resources:
             FromPort: 12000
             ToPort: 12000
           - CidrIp: 0.0.0.0/0
-            IpProtocol: -1
+            IpProtocol: tcp
+            FromPort: 30303
+            ToPort: 30303
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: udp
             FromPort: 30303
             ToPort: 30303
         VpcId: !Ref VPC
