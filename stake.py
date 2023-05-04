@@ -310,5 +310,5 @@ def stop_node():
 
 signal.signal(signal.SIGINT, stop_node)
 signal.signal(signal.SIGTERM, stop_node)
-signal.signal(signal.SIGKILL, stop_node)
+
 node.run()
