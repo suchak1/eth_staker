@@ -86,7 +86,7 @@ Resources:
               awslogs-region: !Ref AWS::Region
       # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
       # Cpu: 2048 # 2vCPUs
-      # Memory: 6144 # 6GB / 8GB
+      Memory: 6144 # 6GB / 8GB
       ExecutionRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole"
       Family: !Sub "${Stage}_eth_staker"
       NetworkMode: bridge
