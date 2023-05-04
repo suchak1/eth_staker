@@ -107,9 +107,7 @@ Resources:
         GroupName: !Sub "${Stage}_staking_sg"
         SecurityGroupEgress: 
           - CidrIp: 0.0.0.0/0
-            IpProtocol: tcp
-          - CidrIp: 0.0.0.0/0
-            IpProtocol: udp
+            IpProtocol: -1
         SecurityGroupIngress: 
           - CidrIp: 0.0.0.0/0
             IpProtocol: tcp
