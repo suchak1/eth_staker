@@ -8,8 +8,9 @@ ENV DEPLOY_ENV "${DEPLOY_ENV}"
 ENV VERSION "${VERSION}"
 ENV ETH_DIR "${HOME}/ethereum"
 ENV EXEC_DIR "${ETH_DIR}/execution"
-ENV CONS_DIR "${ETH_DIR}/consensus"
-ENV PRYSM_DIR "${CONS_DIR}/prysm"
+ENV PRYSM_DIR_BASE "/consensus/prysm"
+ENV PRYSM_DIR "${ETH_DIR}${PRYSM_DIR_BASE}"
+
 
 # Install deps
 RUN apt-get update && \
@@ -48,9 +49,9 @@ RUN chmod +x beacon-chain validator prysmctl
 ENV PATH "${PATH}:${PRYSM_DIR}"
 
 # Download consensus snapshot
-COPY "${PRYSM_DIR}/download_checkpoint.sh" .
+COPY ".${PRYSM_DIR_BASE}/download_checkpoint.sh" .
 # Genesis block for goerli testnet
-COPY "${PRYSM_DIR}/genesis.ssz" .
+COPY ".${PRYSM_DIR_BASE}/genesis.ssz" .
 RUN bash download_checkpoint.sh
 
 # Run app
