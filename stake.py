@@ -47,6 +47,9 @@ class Snapshot:
              for snapshot in curr_snapshots]
         )
         if all_snapshots_are_old:
+            # Don't need to wait for 'completed' status
+            # As soon as function returns,
+            # old state is preserved while snapshot is in progress
             snapshot = self.ec2.create_snapshot(
                 VolumeId=self.volume_id,
                 TagSpecifications=[
@@ -91,8 +94,8 @@ class Snapshot:
             # Add existing snapshot id from ssm
             exceptions.add(self.ssm.get_parameter(
                 Name=self.tag)['Parameter']['Value'])
-        except:
-            pass
+        except Exception as e:
+            logging.exception(e)
 
         try:
             # Add snapshot id from current instance's launch template
@@ -103,8 +106,8 @@ class Snapshot:
                     if device['DeviceName'] == '/dev/sdx':
                         exceptions.add(device['Ebs']['SnapshotId'])
                         break
-        except:
-            pass
+        except Exception as e:
+            logging.exception(e)
 
         return exceptions
 
@@ -232,22 +235,19 @@ class Node:
 
     def signal_processes(self, sig):
         for meta in self.processes:
-            os.kill(meta['process'].pid, sig)
+            try:
+                os.kill(meta['process'].pid, sig)
+            except Exception as e:
+                logging.exception(e)
 
     def interrupt(self):
         self.signal_processes(signal.SIGINT)
 
     def terminate(self):
-        try:
-            self.signal_processes(signal.SIGTERM)
-        except:
-            pass
+        self.signal_processes(signal.SIGTERM)
 
     def kill(self):
-        try:
-            self.signal_processes(signal.SIGKILL)
-        except:
-            pass
+        self.signal_processes(signal.SIGKILL)
 
     def print_line(self, prefix, stdout):
         line = stdout.__next__().decode('UTF-8').strip()
@@ -275,7 +275,6 @@ class Node:
                             self.print_line(meta['prefix'], meta['stdout'])
                     except StopIteration:
                         # only break the loop if processes have been stopped
-                        # since StopIteration could also be stdout waiting for logs
                         if sent_interrupt:
                             break
             except Exception as e:
@@ -312,9 +311,27 @@ node.run()
 # https://docs.prylabs.network/docs/security-best-practices
 # - broadcast public dns, use elastic ip, route 53 record?
 # https://docs.prylabs.network/docs/prysm-usage/p2p-host-ip#broadcast-your-public-ip-address
+# - use trusted nodes json
 # - keep system clock up to date
 # - export metrics / have an easy way to monitor
-# - use arm64 if possible
+
+# Extra:
+# - use arm64 if possible - instance type suggestions in template.yaml - m6g.large for dev m6g.xlarge for prod
+# - use spot instances
+#   - multiple zones
+#   - multiple instance types
+#   - enable capacity rebalancing
+#   - only use in dev until stable for prod
 # - implement mev boost
 # - remove mev relays w greater than 100ms ping
 # - mev-relays.beaconstate.info
+# - data integrity protection
+#   - shutdown / terminate instance if process fails and others continue => forces new vol from last snapshot
+#       - perhaps implement counter so if 3 process failures in a row, terminate instance
+#   - use `geth --exec '(eth?.syncing?.currentBlock/eth?.syncing?.highestBlock)*100' attach --datadir /mnt/ebs/.ethereum/goerli`
+#       - will yield NaN if already synced or 68.512213 if syncing
+#   - figure out why deployment is causing disgraceful exit, geth is noticing kill signal
+#       - container should be getting 30 sec to shutdown with SIGTERM or SIGINT
+# - consider snapshot lifecycle policy w tag every month keep last 3
+#   - create w cf
+# - figure out eventbridge and pause node when event comes in?
