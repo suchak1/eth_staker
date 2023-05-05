@@ -2,6 +2,7 @@ import os
 import sys
 import boto3
 import signal
+import logging
 from time import sleep
 import subprocess
 from glob import glob
@@ -269,8 +270,9 @@ class Node:
                         sent_interrupt = True
                     for meta in self.processes:
                         self.print_line(meta['prefix'], meta['stdout'])
+                    0/0
             except Exception as e:
-                print(e)
+                logging.exception(e)
 
             sleep(5)
             self.terminate()
@@ -282,7 +284,7 @@ class Node:
 node = Node()
 
 
-def stop_node():
+def stop_node(*_):
     node.interrupt()
     sleep(3)
     node.terminate()
@@ -301,7 +303,7 @@ node.run()
 # - set suggested fee address
 # - security best practices
 # https://docs.prylabs.network/docs/security-best-practices
-# - broadcast public dns
+# - broadcast public dns, use elastic ip, route 53 record?
 # https://docs.prylabs.network/docs/prysm-usage/p2p-host-ip#broadcast-your-public-ip-address
 # - keep system clock up to date
 # - export metrics / have an easy way to monitor
