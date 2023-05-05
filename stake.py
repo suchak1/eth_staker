@@ -265,6 +265,7 @@ class Node:
                     if self.snapshot.is_older_than(self.most_recent, 30):
                         backup_is_recent = False
                     if not backup_is_recent and not sent_interrupt:
+                        print('Pausing node to initiate snapshot.')
                         self.interrupt()
                         # since_signal = time()
                         sent_interrupt = True
