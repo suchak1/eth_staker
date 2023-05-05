@@ -159,7 +159,7 @@ class Node:
         self.snapshot = Snapshot()
         self.most_recent = self.snapshot.backup()
 
-    def run_cmd(cmd):
+    def run_cmd(self, cmd):
         print(f"Running cmd: {' '.join(cmd)}")
         process = subprocess.Popen(
             cmd,
