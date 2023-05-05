@@ -150,7 +150,7 @@ class Node:
         prysm_dir_base = f"/{'Library/Eth2' if on_mac else '.eth2'}"
         geth_dir_postfix = '/goerli' if is_dev else ''
 
-        self.geth_data_dir = f"{prefix}{geth_dir_base}${geth_dir_postfix}"
+        self.geth_data_dir = f"{prefix}{geth_dir_base}{geth_dir_postfix}"
         self.prysm_data_dir = f"{prefix}{prysm_dir_base}"
 
         ipc_postfix = '/geth.ipc'
