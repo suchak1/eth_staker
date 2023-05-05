@@ -270,7 +270,6 @@ class Node:
                         sent_interrupt = True
                     for meta in self.processes:
                         self.print_line(meta['prefix'], meta['stdout'])
-                    0/0
             except Exception as e:
                 logging.exception(e)
 
