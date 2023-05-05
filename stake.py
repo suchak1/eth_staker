@@ -30,7 +30,8 @@ class Snapshot:
         self.ec2 = boto3.client('ec2')
         self.ssm = boto3.client('ssm')
         if AWS:
-            self.volume_id = self.get_volume_id()
+            self.volume_id = self.get_prefix_id('VOLUME')
+            self.instance_id = self.get_prefix_id('INSTANCE')
 
     def is_older_than(self, snapshot, num_days):
         created = self.get_snapshot_time(snapshot)
@@ -65,10 +66,10 @@ class Snapshot:
 
             return snapshot
 
-    def get_volume_id(self):
-        with open('/mnt/ebs/VOLUME_ID', 'r') as file:
-            volume_id = file.read().strip()
-        return volume_id
+    def get_prefix_id(self, prefix):
+        with open(f'/mnt/ebs/{prefix}_ID', 'r') as file:
+            id = file.read().strip()
+        return id
 
     def get_snapshots(self):
         snapshots = self.ec2.describe_snapshots(
@@ -93,8 +94,14 @@ class Snapshot:
             pass
 
         try:
-            # TODO: Add existing snapshot id from evaluated cf stack
-            pass
+            # Add snapshot id from current instance's launch template
+            if AWS:
+                launch_template = self.ec2.get_launch_template_data(
+                    InstanceId=self.instance_id)
+                for device in launch_template['LaunchTemplateData']['BlockDeviceMappings']:
+                    if device['DeviceName'] == '/dev/sdx':
+                        exceptions.add(device['Ebs']['SnapshotId'])
+                        break
         except:
             pass
 

@@ -283,6 +283,7 @@ Resources:
             mount -o nouuid /dev/sdx /mnt/ebs
             # Write volume id to volume
             awk -F' '  '{print $NF}' <<< $(/sbin/ebsnvme-id /dev/sdx -v) > /mnt/ebs/VOLUME_ID
+            awk -F' '  '{print $NF}' <<< $(ec2-metadata --instance-id) > /mnt/ebs/INSTANCE_ID
 
       LaunchTemplateName: !Sub "${Stage}_launch_template"
 
