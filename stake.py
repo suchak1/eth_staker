@@ -269,8 +269,14 @@ class Node:
                         self.interrupt()
                         # since_signal = time()
                         sent_interrupt = True
-                    for meta in self.processes:
-                        self.print_line(meta['prefix'], meta['stdout'])
+                    try:
+                        for meta in self.processes:
+                            self.print_line(meta['prefix'], meta['stdout'])
+                    except StopIteration:
+                        # only break the loop if processes have been stopped
+                        # since StopIteration could also be stdout waiting for logs
+                        if sent_interrupt:
+                            break
             except Exception as e:
                 logging.exception(e)
 
