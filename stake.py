@@ -159,6 +159,16 @@ class Node:
         self.snapshot = Snapshot()
         self.most_recent = self.snapshot.backup()
 
+    def run_cmd(cmd):
+        print(f"Running cmd: {' '.join(cmd)}")
+        process = subprocess.Popen(
+            cmd,
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+        )
+        return process
+
     def execution(self):
         args_list = []
 
@@ -172,13 +182,9 @@ class Node:
 
         default_args = ['--http', '--http.api', 'eth,net,engine,admin']
         args = args_list + default_args
-        process = subprocess.Popen(
-            ['geth'] + args,
-            shell=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
-        )
-        return process
+        cmd = ['geth'] + args
+
+        return self.run_cmd(cmd)
 
     def consensus(self):
         args_list = [
@@ -203,13 +209,8 @@ class Node:
             # '--suggested-fee-recipient=ETH_WALLET_ADDR_HERE!'
         ]
         args = args_list + default_args
-        process = subprocess.Popen(
-            ['beacon-chain'] + args,
-            shell=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
-        )
-        return process
+        cmd = ['beacon-chain'] + args
+        return self.run_cmd(cmd)
 
     def start(self):
         processes = [
