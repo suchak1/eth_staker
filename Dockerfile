@@ -4,8 +4,11 @@ FROM ubuntu:23.04
 # Configure env vars
 ARG DEPLOY_ENV
 ARG VERSION
-ENV DEPLOY_ENV "${DEPLOY_ENV}"
+ARG ARCH
+ENV DEPLOY_ENV "${DEPLOY_ENV:-prod}"
 ENV VERSION "${VERSION}"
+ENV ARCH "${ARCH:-linux-arm64}"
+
 ENV ETH_DIR "${HOME}/ethereum"
 ENV EXEC_DIR "${ETH_DIR}/execution"
 ENV PRYSM_DIR_BASE "/consensus/prysm"
@@ -24,8 +27,6 @@ RUN python3 -m pip install boto3
 # # Download geth (execution)
 RUN mkdir -p "${EXEC_DIR}"
 WORKDIR "${EXEC_DIR}"
-ENV ARCH linux-amd64
-# ENV ARCH linux-arm64
 ENV GETH_VERSION 1.11.6-ea9e62ca
 ENV GETH_ARCHIVE "geth-${ARCH}-${GETH_VERSION}"
 RUN curl -LO "https://gethstore.blob.core.windows.net/builds/${GETH_ARCHIVE}.tar.gz"

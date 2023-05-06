@@ -15,14 +15,21 @@ Parameters:
   DesiredCapacity:
     Type: "Number"
     Default: 1
-  LatestECSOptimizedAMI:
+  Arch:
+    Type: "String"
+    Default: linux-arm64
+  ECSOptimizedAMD64:
     Description: AMI ID
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id
-  # SnapShot:
-  #   Description: Snapshot ID
-  #   Type: "String"
-  #   Default: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Stage}_staking_snapshot'
+  ECSOptimizedARM64:
+    Description: AMI ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ecs/optimized-ami/amazon-linux-2023/arm64/recommended/image_id
+
+Conditions:
+  UseAMD64:
+    !Equals [!Ref Arch, linux-amd64]
 
 Resources:
   TaskRole:
@@ -86,14 +93,14 @@ Resources:
               awslogs-region: !Ref AWS::Region
       # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
       # Cpu: 2048 # 2vCPUs
-      Memory: 6144 # 6GB / 8GB
+      Memory: 14336 # 14GB / 16GB
       ExecutionRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole"
       Family: !Sub "${Stage}_eth_staker"
       NetworkMode: bridge
       RequiresCompatibilities: 
         - EC2
       RuntimePlatform: 
-        CpuArchitecture: X86_64
+        CpuArchitecture: !If [UseAMD64, X86_64, ARM64]
         OperatingSystemFamily: LINUX
       TaskRoleArn: !GetAtt TaskRole.Arn
       Volumes: 
@@ -229,7 +236,7 @@ Resources:
         IamInstanceProfile: 
           Name: ecsInstanceRole
         # This is Amazon Linux 2023 AMI for amd64
-        ImageId: !Ref LatestECSOptimizedAMI
+        ImageId: !If [UseAMD64, !Ref ECSOptimizedAMD64, !Ref ECSOptimizedARM64]
         InstanceInitiatedShutdownBehavior: terminate
         # for spot instances
         # InstanceMarketOptions: 
@@ -237,9 +244,10 @@ Resources:
         # # use this to specify reqs instead of instance type
         # InstanceRequirements: 
         #   InstanceRequirements
-        # Try m6g.large (7.5% savings) or m7g.large (2% savings) in dev
+        # Try m6g.large (7.5% savings) or m7g.large (2% savings) in dev 
+        #   - jk crashes bc of cpu and mem usage on t3.large
         # and m6g.xlarge or m7g.xlarge in prod
-        InstanceType: t3.large
+        InstanceType: !If [UseAMD64, t3.xlarge, m6g.xlarge]
         KeyName: !Sub "${Stage}_staking_keys"
         MaintenanceOptions: 
           AutoRecovery: default
