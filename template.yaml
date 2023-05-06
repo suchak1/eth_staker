@@ -17,7 +17,7 @@ Parameters:
     Default: 1
   Arch:
     Type: "String"
-    Default: linux-arm64
+    Default: arm64
   ECSOptimizedAMD64:
     Description: AMI ID
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
@@ -29,7 +29,7 @@ Parameters:
 
 Conditions:
   UseAMD64:
-    !Equals [!Ref Arch, linux-amd64]
+    !Equals [!Ref Arch, amd64]
 
 Resources:
   TaskRole:
@@ -277,8 +277,8 @@ Resources:
             #!/bin/bash
             echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
             echo ECS_ENABLE_CONTAINER_METADATA=true >> /etc/ecs/ecs.config
-            yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
-            yum install -y https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+            yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_${Arch}/amazon-ssm-agent.rpm
+            yum install -y https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/${Arch}/latest/amazon-cloudwatch-agent.rpm
             yum install -y aws-cfn-bootstrap hibagent 
             /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource LaunchTemplate
             /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource AutoScalingGroup

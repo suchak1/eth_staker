@@ -7,7 +7,7 @@ ARG VERSION
 ARG ARCH
 ENV DEPLOY_ENV "${DEPLOY_ENV:-prod}"
 ENV VERSION "${VERSION}"
-ENV ARCH "${ARCH:-linux-arm64}"
+ENV ARCH "${ARCH:-arm64}"
 
 ENV ETH_DIR "${HOME}/ethereum"
 ENV EXEC_DIR "${ETH_DIR}/execution"
@@ -27,8 +27,9 @@ RUN python3 -m pip install boto3
 # # Download geth (execution)
 RUN mkdir -p "${EXEC_DIR}"
 WORKDIR "${EXEC_DIR}"
+ENV PLATFORM_ARCH "linux-${ARCH}"
 ENV GETH_VERSION 1.11.6-ea9e62ca
-ENV GETH_ARCHIVE "geth-${ARCH}-${GETH_VERSION}"
+ENV GETH_ARCHIVE "geth-${PLATFORM_ARCH}-${GETH_VERSION}"
 RUN curl -LO "https://gethstore.blob.core.windows.net/builds/${GETH_ARCHIVE}.tar.gz"
 RUN tar -xvzf "${GETH_ARCHIVE}.tar.gz"
 RUN mv "${GETH_ARCHIVE}/geth" . && rm -rf "${GETH_ARCHIVE}"
@@ -41,9 +42,9 @@ ENV PATH "${PATH}:${EXEC_DIR}"
 RUN mkdir -p "${PRYSM_DIR}"
 WORKDIR "${PRYSM_DIR}"
 ENV PRYSM_VERSION v4.0.3
-RUN curl -Lo beacon-chain "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/beacon-chain-${PRYSM_VERSION}-${ARCH}"
-RUN curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/validator-${PRYSM_VERSION}-${ARCH}"
-RUN curl -Lo prysmctl "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/prysmctl-${PRYSM_VERSION}-${ARCH}"
+RUN curl -Lo beacon-chain "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/beacon-chain-${PRYSM_VERSION}-${PLATFORM_ARCH}"
+RUN curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/validator-${PRYSM_VERSION}-${PLATFORM_ARCH}"
+RUN curl -Lo prysmctl "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/prysmctl-${PRYSM_VERSION}-${PLATFORM_ARCH}"
 
 RUN chmod +x beacon-chain validator prysmctl
 # Add prysm to path
