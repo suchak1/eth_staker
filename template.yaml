@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
-  Stage:
+  DeployEnv:
     Type: "String"
     AllowedValues:
       - dev
@@ -65,15 +65,15 @@ Resources:
                 Action: 
                   - 'ssm:PutParameter'
                   - 'ssm:GetParameter'
-                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Stage}_staking_snapshot'
-      RoleName: !Sub "${Stage}StakingTaskRole"
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DeployEnv}_staking_snapshot'
+      RoleName: !Sub "${DeployEnv}StakingTaskRole"
   TaskDefinition:
     DependsOn: TaskRole
     Type: AWS::ECS::TaskDefinition
     Properties: 
       ContainerDefinitions: 
-        - Name: !Sub "${Stage}_staking_container"
-          Image: !Sub "${AWS::AccountId}.dkr.ecr.us-east-1.amazonaws.com/${Stage}_eth_staker:latest"
+        - Name: !Sub "${DeployEnv}_staking_container"
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.us-east-1.amazonaws.com/${DeployEnv}_eth_staker:latest"
           Environment:
             - Name: AWS_DEFAULT_REGION
               Value: !Ref AWS::Region
@@ -89,13 +89,13 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "/ecs/${Stage}_eth_staker"
+              awslogs-group: !Sub "/ecs/${DeployEnv}_eth_staker"
               awslogs-region: !Ref AWS::Region
       # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
       # Cpu: 2048 # 2vCPUs
       Memory: 14336 # 14GB / 16GB
       ExecutionRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole"
-      Family: !Sub "${Stage}_eth_staker"
+      Family: !Sub "${DeployEnv}_eth_staker"
       NetworkMode: bridge
       RequiresCompatibilities: 
         - EC2
@@ -111,7 +111,7 @@ Resources:
       Type: AWS::EC2::SecurityGroup
       Properties:
         GroupDescription: String
-        GroupName: !Sub "${Stage}_staking_sg"
+        GroupName: !Sub "${DeployEnv}_staking_sg"
         SecurityGroupEgress: 
           - CidrIp: 0.0.0.0/0
             IpProtocol: -1
@@ -143,7 +143,7 @@ Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Sub "${Stage}-staking-cluster"
+      ClusterName: !Sub "${DeployEnv}-staking-cluster"
       # No capacity providers necessary for EC2
       ClusterSettings:
         - Name: containerInsights
@@ -156,7 +156,7 @@ Resources:
         - ECSCluster
         - TaskDefinition
       Properties:
-        Cluster: !Sub "${Stage}-staking-cluster"
+        Cluster: !Sub "${DeployEnv}-staking-cluster"
         DeploymentConfiguration: 
           DeploymentCircuitBreaker:
             Enable: false
@@ -176,15 +176,15 @@ Resources:
           - Type: spread
             Field: instanceId
         SchedulingStrategy: REPLICA
-        ServiceName: !Sub "${Stage}_staking_service"
-        TaskDefinition: !Sub "${Stage}_eth_staker"
+        ServiceName: !Sub "${DeployEnv}_staking_service"
+        TaskDefinition: !Sub "${DeployEnv}_eth_staker"
   AutoScalingGroup:
     DependsOn: 
       - ECSCluster
       - LaunchTemplate
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      AutoScalingGroupName: !Sub "ECS_${Stage}_staking_ASG"
+      AutoScalingGroupName: !Sub "ECS_${DeployEnv}_staking_ASG"
       AvailabilityZones: 
         - !Sub "${AWS::Region}d"
       CapacityRebalance: true
@@ -226,7 +226,7 @@ Resources:
               # Iops: 10000
               # 10 - 15k is laptop/desktop SSD throughput
               # Throughput: 1000
-              SnapshotId: !Sub '{{resolve:ssm:${Stage}_staking_snapshot}}'
+              SnapshotId: !Sub '{{resolve:ssm:${DeployEnv}_staking_snapshot}}'
                 # Condition: 
               # try defining cf param as ssm param val or 'default' / pseudo AWS::NoValue
               # https://www.jforte.me/posts/create-ebs-volume-snapshot-condtions-aws-cdk/
@@ -248,7 +248,7 @@ Resources:
         #   - jk crashes bc of cpu and mem usage on t3.large
         # and m6g.xlarge or m7g.xlarge in prod
         InstanceType: !If [UseAMD64, t3.xlarge, m6g.xlarge]
-        KeyName: !Sub "${Stage}_staking_keys"
+        KeyName: !Sub "${DeployEnv}_staking_keys"
         MaintenanceOptions: 
           AutoRecovery: default
         Monitoring: 
@@ -295,4 +295,4 @@ Resources:
             awk -F' '  '{print $NF}' <<< $(/sbin/ebsnvme-id /dev/sdx -v) > /mnt/ebs/VOLUME_ID
             awk -F' '  '{print $NF}' <<< $(ec2-metadata --instance-id) > /mnt/ebs/INSTANCE_ID
 
-      LaunchTemplateName: !Sub "${Stage}_launch_template"
+      LaunchTemplateName: !Sub "${DeployEnv}_launch_template"

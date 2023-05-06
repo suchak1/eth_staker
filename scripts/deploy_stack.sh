@@ -4,9 +4,9 @@ set -eu
 
 
 # Default deploy env for infra code should be dev
-Stage=${Stage:-dev}
+DEPLOY_ENV=${DEPLOY_ENV:-dev}
 
-if [[ "${Stage}" = "dev" ]]
+if [[ "${DEPLOY_ENV}" = "dev" ]]
 then
     ParamsFile=dev-parameters.env
 else
@@ -14,7 +14,7 @@ else
 fi
 
 aws cloudformation deploy \
-    --stack-name "ECS-${Stage}-staking-cluster" \
+    --stack-name "ECS-${DEPLOY_ENV}-staking-cluster" \
     --template-file template.yaml \
     --parameter-overrides $(cat "${ParamsFile}") \
     --capabilities CAPABILITY_NAMED_IAM \
@@ -28,7 +28,7 @@ aws cloudformation deploy \
 
 # use task-definition flag in this cmd OR
 aws ecs update-service \
-    --cluster "${Stage}-staking-cluster" \
-    --service "${Stage}_staking_service" \
-    --task-definition "${Stage}_eth_staker" \
+    --cluster "${DEPLOY_ENV}-staking-cluster" \
+    --service "${DEPLOY_ENV}_staking_service" \
+    --task-definition "${DEPLOY_ENV}_eth_staker" \
     --force-new-deployment

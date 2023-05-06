@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      Stage: ${{ fromJSON('["dev", "prod"]')[github.ref_name == 'master'] }}
+      DEPLOY_ENV: ${{ fromJSON('["dev", "prod"]')[github.ref_name == 'master'] }}
       ARCH: arm64
     steps:
       - name: Checkout repo
@@ -42,7 +42,6 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ fromJSON('["dev_eth_staker", "prod_eth_staker"]')[github.ref_name == 'master'] }}
-          DEPLOY_ENV: ${{ fromJSON('["dev", "prod"]')[github.ref_name == 'master'] }}
           IMAGE_TAG: ${{ github.sha }}
         with:
           context: .
@@ -61,14 +60,14 @@ jobs:
           Subnet: ${{ secrets.SUBNET }}
           VPC: ${{ secrets.VPC }}
         run: |
-          if [[ "${Stage}" = "dev" ]]
+          if [[ "${DEPLOY_ENV}" = "dev" ]]
           then
               ParamsFile=dev-parameters.env
           else
               ParamsFile=parameters.env
           fi
           echo "
-          Stage=${Stage}
+          DeployEnv=${DEPLOY_ENV}
           Subnet=${Subnet}
           VPC=${VPC}
           Arch=${ARCH}
