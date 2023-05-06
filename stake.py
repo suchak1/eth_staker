@@ -301,14 +301,19 @@ node.run()
 
 
 # TODO:
+# - get goerli eth - https://testnetbridge.com/
 # - set suggested fee address
 # - security best practices
 # https://docs.prylabs.network/docs/security-best-practices
 # - broadcast public dns, use elastic ip, route 53 record?
 # https://docs.prylabs.network/docs/prysm-usage/p2p-host-ip#broadcast-your-public-ip-address
 # - use trusted nodes json
-# - keep system clock up to date
-# - export metrics / have an easy way to monitor
+# - change ssh port
+# - keep system clock up to date - use chrony
+# - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free
+
+# https://someresat.medium.com/guide-to-staking-on-ethereum-ubuntu-goerli-prysm-4a640794e8b5
+# https://someresat.medium.com/guide-to-staking-on-ethereum-ubuntu-prysm-581fb1969460
 
 # Extra:
 # - use spot instances
@@ -326,9 +331,6 @@ node.run()
 #       - will yield NaN if already synced or 68.512213 if syncing
 #   - figure out why deployment is causing disgraceful exit, geth is noticing kill signal
 #       - container should be getting 30 sec to shutdown with SIGTERM or SIGINT
-# - consider snapshot lifecycle policy w tag every month keep last 3
-#   - create w cf
-# - figure out eventbridge and pause node when event comes in?
 # - enable swap space if need more memory w 4vCPUs
 #   - disabled on host by default for ecs optimized amis
 #   - also need to set swap in task def
