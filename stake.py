@@ -308,7 +308,6 @@ node.run()
 # - broadcast public dns, use elastic ip, route 53 record?
 # https://docs.prylabs.network/docs/prysm-usage/p2p-host-ip#broadcast-your-public-ip-address
 # - use trusted nodes json
-# - change ssh port - try cmds on new instance w new sg
 # - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free
 
 # https://someresat.medium.com/guide-to-staking-on-ethereum-ubuntu-goerli-prysm-4a640794e8b5

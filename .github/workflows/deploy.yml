@@ -59,6 +59,7 @@ jobs:
         env:
           Subnet: ${{ secrets.SUBNET }}
           VPC: ${{ secrets.VPC }}
+          SSHPort: ${{ secrets.SSH_PORT }}
         run: |
           if [[ "${DEPLOY_ENV}" = "dev" ]]
           then
@@ -71,6 +72,7 @@ jobs:
           Subnet=${Subnet}
           VPC=${VPC}
           Arch=${ARCH}
+          SSHPort=${SSHPort}
           " >> "${ParamsFile}"
 
       - name: Update ECS stack
