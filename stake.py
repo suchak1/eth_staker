@@ -270,13 +270,8 @@ class Node:
                         self.interrupt()
                         # since_signal = time()
                         sent_interrupt = True
-                    try:
-                        for meta in self.processes:
-                            self.print_line(meta['prefix'], meta['stdout'])
-                    except StopIteration:
-                        # only break the loop if processes have been stopped
-                        if sent_interrupt:
-                            break
+                    for meta in self.processes:
+                        self.print_line(meta['prefix'], meta['stdout'])
             except Exception as e:
                 logging.exception(e)
 
@@ -316,7 +311,6 @@ node.run()
 # - export metrics / have an easy way to monitor
 
 # Extra:
-# - use arm64 if possible - instance type suggestions in template.yaml - m6g.large for dev m6g.xlarge for prod
 # - use spot instances
 #   - multiple zones
 #   - multiple instance types
@@ -335,3 +329,7 @@ node.run()
 # - consider snapshot lifecycle policy w tag every month keep last 3
 #   - create w cf
 # - figure out eventbridge and pause node when event comes in?
+# - enable swap space if need more memory w 4vCPUs
+#   - disabled on host by default for ecs optimized amis
+#   - also need to set swap in task def
+#   - https://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-swap.html
