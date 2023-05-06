@@ -40,20 +40,21 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v4
         env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ fromJSON('["dev_eth_staker", "prod_eth_staker"]')[github.ref_name == 'master'] }}
           DEPLOY_ENV: ${{ fromJSON('["dev", "prod"]')[github.ref_name == 'master'] }}
           IMAGE_TAG: ${{ github.sha }}
         with:
           context: .
-          platforms: ${{ fromJSON('["linux/amd64", "linux/arm64"]')[env.ARCH == 'arm64'] }}
+          platforms: linux/${{ env.ARCH }}
           push: true
           build-args: |
             DEPLOY_ENV=${DEPLOY_ENV}
             VERSION=${IMAGE_TAG}
             ARCH=${ARCH}
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest
 
       - name: Create parameters.env
         env:
