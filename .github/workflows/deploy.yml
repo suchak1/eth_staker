@@ -37,27 +37,25 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag, and push image to Amazon ECR
-        # look into using this action: https://github.com/marketplace/actions/docker-build-push-action
-        id: build-image
-        env:
+      - name: Build and push
+        uses: docker/build-push-action@v4
+         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ fromJSON('["dev_eth_staker", "prod_eth_staker"]')[github.ref_name == 'master'] }}
           DEPLOY_ENV: ${{ fromJSON('["dev", "prod"]')[github.ref_name == 'master'] }}
           IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker buildx build \
-            --load \
-            --platform linux/$ARCH \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
-            --build-arg DEPLOY_ENV=${DEPLOY_ENV} \
-            --build-arg VERSION=${IMAGE_TAG} \
-            --build-arg ARCH=${ARCH} \
-            .
-          docker push -a $ECR_REGISTRY/$ECR_REPOSITORY
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-      
+        with:
+          context: .
+          platforms: linux/$ARCH
+          push: true
+          build-args: |
+            DEPLOY_ENV=${DEPLOY_ENV}
+            VERSION=${IMAGE_TAG}
+            ARCH=${ARCH}
+          tags: |
+            ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
+            ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
+
       - name: Create parameters.env
         env:
           Subnet: ${{ secrets.SUBNET }}
