@@ -40,7 +40,6 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v4
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ fromJSON('["dev_eth_staker", "prod_eth_staker"]')[github.ref_name == 'master'] }}
           DEPLOY_ENV: ${{ fromJSON('["dev", "prod"]')[github.ref_name == 'master'] }}
           IMAGE_TAG: ${{ github.sha }}
@@ -53,8 +52,8 @@ jobs:
             VERSION=${IMAGE_TAG}
             ARCH=${ARCH}
           tags: |
-            ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
-            ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
+            ${{ steps.login-ecr.outputs.registry }}/${ECR_REPOSITORY}:${IMAGE_TAG}
+            ${{ steps.login-ecr.outputs.registry }}/${ECR_REPOSITORY}:latest
 
       - name: Create parameters.env
         env:
