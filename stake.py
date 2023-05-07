@@ -25,6 +25,12 @@ snapshot_days = 30
 max_snapshot_days = max_snapshots * snapshot_days
 
 
+def term_node_after_int(node):
+    sleep(5)
+    node.terminate()
+    sleep(5)
+
+
 class Snapshot:
     def __init__(self) -> None:
         self.tag = f'{deploy_env}_staking_snapshot'
@@ -261,6 +267,8 @@ class Node:
             sent_interrupt = False
             # start = time()
             # since_signal = time()
+            # INSERT MEV REPLAY SHUFFLE LOGIC HERE
+            # save good replay urls to self?
             try:
                 while True:
                     if self.snapshot.is_older_than(self.most_recent, 30):
@@ -274,10 +282,7 @@ class Node:
                         self.print_line(meta['prefix'], meta['stdout'])
             except Exception as e:
                 logging.exception(e)
-            # INSERT MEV REPLAY SHUFFLE LOGIC HERE
-            sleep(5)
-            self.terminate()
-            sleep(5)
+            term_node_after_int(self)
             self.kill()
             self.most_recent = self.snapshot.backup()
 
@@ -287,9 +292,7 @@ node = Node()
 
 def stop_node(*_):
     node.interrupt()
-    sleep(3)
-    node.terminate()
-    sleep(3)
+    term_node_after_int(node)
     print('Node stopped.')
     exit(0)
 
