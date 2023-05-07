@@ -42,11 +42,16 @@ ENV PATH "${PATH}:${EXEC_DIR}"
 RUN mkdir -p "${PRYSM_DIR}"
 WORKDIR "${PRYSM_DIR}"
 ENV PRYSM_VERSION v4.0.3
+ENV MEV_VERSION 1.5.1-alpha1
+ENV MEV_ARCHIVE "mev-boost_${MEV_VERSION}_linux_${ARCH}"
 RUN curl -Lo beacon-chain "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/beacon-chain-${PRYSM_VERSION}-${PLATFORM_ARCH}"
 RUN curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/validator-${PRYSM_VERSION}-${PLATFORM_ARCH}"
 RUN curl -Lo prysmctl "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/prysmctl-${PRYSM_VERSION}-${PLATFORM_ARCH}"
+RUN curl -LO "https://github.com/flashbots/mev-boost/releases/download/v${MEV_VERSION}/${MEV_ARCHIVE}.tar.gz"
+RUN tar -xvzf "${MEV_ARCHIVE}.tar.gz"
+RUN mv "${MEV_ARCHIVE}/mev-boost" . && rm -rf "${MEV_ARCHIVE}"
 
-RUN chmod +x beacon-chain validator prysmctl
+RUN chmod +x beacon-chain validator prysmctl mev-boost
 # Add prysm to path
 ENV PATH "${PATH}:${PRYSM_DIR}"
 

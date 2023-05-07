@@ -274,7 +274,7 @@ class Node:
                         self.print_line(meta['prefix'], meta['stdout'])
             except Exception as e:
                 logging.exception(e)
-
+            # INSERT MEV REPLAY SHUFFLE LOGIC HERE
             sleep(5)
             self.terminate()
             sleep(5)
@@ -307,9 +307,26 @@ node.run()
 # https://docs.prylabs.network/docs/security-best-practices
 # - broadcast public dns, use elastic ip, route 53 record?
 # https://docs.prylabs.network/docs/prysm-usage/p2p-host-ip#broadcast-your-public-ip-address
-# - use trusted nodes json
-# - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free
+# - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free, Beaconcha.in and node exporter
+# - implement mev boost
+#   - store hardcoded relays urls for goerli and mainnet here
+#   - every 30 days, do GET req for all urls and rebuild relays file
+#   - route to test /relay/v1/data/bidtraces/proposer_payload_delivered - make sure 200 response.ok
+#   - remove outliers, test script in container to see response time results
+#   - ping all urls, wait 1 sec, ping all, etc (ping all 5 times total - storing in dict w url key and val is list of res times)
+#   - calculate avg (instead of storing list, could also store res_time / 5 and keep adding)
+#   - figure out how to identify outliers
+#   - get relays from here
+#       - https://github.com/eth-educators/ethstaker-guides/blob/main/MEV-relay-list.md
+#       - https://mev-relays.beaconstate.info/
+#       - https://www.mevboost.org/
+#       - https://www.mevwatch.info/
+#       - https://beaconcha.in/relays
+#       - https://transparency.flashbots.net/
+#       - https://www.mevpanda.com/
+#       - https://ethstaker.cc/mev-relay-list
 
+#   - https://www.coincashew.com/coins/overview-eth/mev-boost
 # https://someresat.medium.com/guide-to-staking-on-ethereum-ubuntu-goerli-prysm-4a640794e8b5
 # https://someresat.medium.com/guide-to-staking-on-ethereum-ubuntu-prysm-581fb1969460
 
@@ -319,7 +336,6 @@ node.run()
 #   - multiple instance types
 #   - enable capacity rebalancing
 #   - only use in dev until stable for prod
-# - implement mev boost
 # - remove mev relays w greater than 100ms ping
 # - mev-relays.beaconstate.info
 # - data integrity protection
@@ -333,3 +349,6 @@ node.run()
 #   - disabled on host by default for ecs optimized amis
 #   - also need to set swap in task def
 #   - https://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-swap.html
+# - use trusted nodes json
+#   - perhaps this https://www.ethernodes.org/tor-seed-nodes
+#   - and this https://www.reddit.com/r/ethdev/comments/kklm0j/comment/gyndv4a/?utm_source=share&utm_medium=web2x&context=3
