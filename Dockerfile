@@ -63,5 +63,5 @@ RUN bash download_checkpoint.sh
 
 # Run app
 WORKDIR "${ETH_DIR}"
-COPY stake.py .
-ENTRYPOINT python3 stake.py
+COPY Staker.py Backup.py Constants.py ./
+ENTRYPOINT python3 Staker.py
