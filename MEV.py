@@ -8,20 +8,36 @@ class Booster:
     def __init__(self):
         pass
 
-    def avg(self, xs):
-        return sum(xs) / len(xs)
-
     def get_relays(self):
-        relays = {relay: [] for relay in RELAYS}
-        for i in range(5):
+        relays = {relay: 0 for relay in RELAYS}
+        bad_relays = set()
+        num_trials = 5
+        for i in range(num_trials):
             for relay in RELAYS:
+                if relay in bad_relays:
+                    continue
+                # get avg response times
                 pong = self.ping(relay)
                 if pong:
-                    relays[relay].append(pong)
+                    relays[relay] += pong / num_trials
+                else:
+                    bad_relays.add(relay)
             sleep(1)
+
+        for relay in bad_relays:
+            del relays[relay]
+
+        ping_times = [v for _, v in relays.items()]
+        dev = stdev(ping_times)
+        avg = mean(ping_times)
+
         valid_relays = []
-        for relay in relays:
-            if relay and :
+
+        for relay, res_time in relays.items():
+            if abs(avg - res_time) < (2 * dev):
+                valid_relays.append(relay)
+
+        return valid_relays
 
     def ping(self, domain):
         try:
