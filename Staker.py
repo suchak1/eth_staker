@@ -59,7 +59,10 @@ class Node:
     def consensus(self):
         args_list = [
             '--accept-terms-of-use',
-            f'--execution-endpoint={self.ipc_path}'
+            f'--execution-endpoint={self.ipc_path}',
+
+            # alternatively http://127.0.0.1:18550
+            '--http-mev-relay=http://localhost:18550'
         ]
 
         prysm_dir = './consensus/prysm'
@@ -84,6 +87,11 @@ class Node:
         cmd = ['beacon-chain'] + args
         return self.run_cmd(cmd)
 
+    def validation(self):
+        args = ['--enable-builder']
+        cmd = ['ping', 'localhost'] + args
+        return self.run_cmd(cmd)
+
     def mev(self):
         # use ','.join(fast_relays) ? look up cli arg format
         args = ['-relay-check']
@@ -94,7 +102,7 @@ class Node:
 
         args += ['-relays', ','.join(self.relays)]
         cmd = ['mev-boost'] + args
-        return self.run(cmd)
+        return self.run_cmd(cmd)
 
     def start(self):
         processes = [
@@ -106,10 +114,10 @@ class Node:
                 'process': self.consensus(),
                 'prefix': "[[[ CONSENSUS ]]]"
             },
-            {
-                'process': self.validation(),
-                'prefix': '(( _VALIDATION ))'
-            },
+            # {
+            #     'process': self.validation(),
+            #     'prefix': '(( _VALIDATION ))'
+            # },
             {
                 'process': self.mev(),
                 'prefix': "+++ MEV_BOOST +++"
@@ -199,17 +207,7 @@ node.run()
 # - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free, Beaconcha.in and node exporter
 # figure out why one process exiting doesn't trigger exception and cause kill loop
 # turn off node for 10 min every 24 hrs?
-# - implement mev boost
 
-# https://github.com/eth-educators/ethstaker-guides/blob/main/prepare-for-the-merge.md#choosing-and-configuring-an-mev-solution
-
-# https://www.mevboost.org/
-
-# https://www.reddit.com/r/ethstaker/comments/xj3bdq/mevboost_relays_to_avoid/?utm_source=share&utm_medium=ios_app&utm_name=ioscss&utm_content=1&utm_term=1
-
-# https://www.reddit.com/r/ethstaker/comments/1394um3/next_steps_after_running_ethwizard/jj1mdjh/?utm_source=share&utm_medium=ios_app&utm_name=ioscss&utm_content=1&utm_term=1&context=3
-
-#   - https://www.coincashew.com/coins/overview-eth/mev-boost
 # https://someresat.medium.com/guide-to-staking-on-ethereum-ubuntu-goerli-prysm-4a640794e8b5
 # https://someresat.medium.com/guide-to-staking-on-ethereum-ubuntu-prysm-581fb1969460
 
