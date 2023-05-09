@@ -5,10 +5,9 @@ import logging
 from time import sleep
 import subprocess
 from glob import glob
-from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS
+from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV
 from Backup import Snapshot
 
-is_dev = DEPLOY_ENV.lower() == 'dev'
 home_dir = os.path.expanduser("~")
 platform = sys.platform.lower()
 
@@ -19,7 +18,7 @@ class Node:
         prefix = f"{'/mnt/ebs' if AWS else home_dir}"
         geth_dir_base = f"/{'Library/Ethereum' if on_mac else '.ethereum'}"
         prysm_dir_base = f"/{'Library/Eth2' if on_mac else '.eth2'}"
-        geth_dir_postfix = '/goerli' if is_dev else ''
+        geth_dir_postfix = '/goerli' if DEV else ''
 
         self.geth_data_dir = f"{prefix}{geth_dir_base}{geth_dir_postfix}"
         self.prysm_data_dir = f"{prefix}{prysm_dir_base}"
@@ -42,7 +41,7 @@ class Node:
     def execution(self):
         args_list = []
 
-        if is_dev:
+        if DEV:
             args_list.append("--goerli")
         else:
             args_list.append("--mainnet")
@@ -64,7 +63,7 @@ class Node:
 
         prysm_dir = './consensus/prysm'
 
-        if is_dev:
+        if DEV:
             args_list.append("--prater")
             args_list.append(f"--genesis-state={prysm_dir}/genesis.ssz")
 
@@ -177,23 +176,24 @@ node.run()
 # - broadcast public dns, use elastic ip, route 53 record?
 # https://docs.prylabs.network/docs/prysm-usage/p2p-host-ip#broadcast-your-public-ip-address
 # - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free, Beaconcha.in and node exporter
+# figure out why one process exiting doesn't trigger exception and cause kill loop
+# turn off node for 10 min every 24 hrs?
 # - implement mev boost
-#   - store hardcoded relays urls for goerli and mainnet here
 #   - every 30 days, do GET req for all urls and rebuild relays file
 #   - route to test /relay/v1/data/bidtraces/proposer_payload_delivered - make sure 200 response.ok
 #   - remove outliers, test script in container to see response time results
 #   - ping all urls, wait 1 sec, ping all, etc (ping all 5 times total - storing in dict w url key and val is list of res times)
 #   - calculate avg (instead of storing list, could also store res_time / 5 and keep adding)
 #   - figure out how to identify outliers
-#   - get relays from here
-#       - https://github.com/eth-educators/ethstaker-guides/blob/main/MEV-relay-list.md
-#       - https://mev-relays.beaconstate.info/
-#       - https://www.mevboost.org/
-#       - https://www.mevwatch.info/
-#       - https://beaconcha.in/relays
-#       - https://transparency.flashbots.net/
-#       - https://www.mevpanda.com/
-#       - https://ethstaker.cc/mev-relay-list
+# MEV boost
+
+# https://github.com/eth-educators/ethstaker-guides/blob/main/prepare-for-the-merge.md#choosing-and-configuring-an-mev-solution
+
+# https://www.mevboost.org/
+
+# https://www.reddit.com/r/ethstaker/comments/xj3bdq/mevboost_relays_to_avoid/?utm_source=share&utm_medium=ios_app&utm_name=ioscss&utm_content=1&utm_term=1
+
+# https://www.reddit.com/r/ethstaker/comments/1394um3/next_steps_after_running_ethwizard/jj1mdjh/?utm_source=share&utm_medium=ios_app&utm_name=ioscss&utm_content=1&utm_term=1&context=3
 
 #   - https://www.coincashew.com/coins/overview-eth/mev-boost
 # https://someresat.medium.com/guide-to-staking-on-ethereum-ubuntu-goerli-prysm-4a640794e8b5
@@ -205,8 +205,6 @@ node.run()
 #   - multiple instance types
 #   - enable capacity rebalancing
 #   - only use in dev until stable for prod
-# - remove mev relays w greater than 100ms ping
-# - mev-relays.beaconstate.info
 # - data integrity protection
 #   - shutdown / terminate instance if process fails and others continue => forces new vol from last snapshot
 #       - perhaps implement counter so if 3 process failures in a row, terminate instance
