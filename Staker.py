@@ -7,6 +7,7 @@ import subprocess
 from glob import glob
 from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV
 from Backup import Snapshot
+from MEV import Booster
 
 home_dir = os.path.expanduser("~")
 platform = sys.platform.lower()
@@ -26,7 +27,7 @@ class Node:
         ipc_postfix = '/geth.ipc'
         self.ipc_path = self.geth_data_dir + ipc_postfix
         self.snapshot = Snapshot()
-        self.most_recent = self.snapshot.backup()
+        self.booster = Booster()
 
     def run_cmd(self, cmd):
         print(f"Running cmd: {' '.join(cmd)}")
@@ -66,6 +67,8 @@ class Node:
         if DEV:
             args_list.append("--prater")
             args_list.append(f"--genesis-state={prysm_dir}/genesis.ssz")
+        else:
+            args_list.append('--mainnet')
 
         if AWS:
             args_list += ["--datadir", self.prysm_data_dir]
@@ -81,6 +84,18 @@ class Node:
         cmd = ['beacon-chain'] + args
         return self.run_cmd(cmd)
 
+    def mev(self):
+        # use ','.join(fast_relays) ? look up cli arg format
+        args = ['-relay-check']
+        if DEV:
+            args.append("-goerli")
+        else:
+            args.append('-mainnet')
+
+        args += ['-relays', ','.join(self.relays)]
+        cmd = ['mev-boost'] + args
+        return self.run(cmd)
+
     def start(self):
         processes = [
             {
@@ -90,6 +105,14 @@ class Node:
             {
                 'process': self.consensus(),
                 'prefix': "[[[ CONSENSUS ]]]"
+            },
+            {
+                'process': self.validation(),
+                'prefix': '(( _VALIDATION ))'
+            },
+            {
+                'process': self.mev(),
+                'prefix': "+++ MEV_BOOST +++"
             }
         ]
         for meta in processes:
@@ -122,9 +145,8 @@ class Node:
     def run(self):
 
         while True:
-            # INSERT MEV REPLAY SHUFFLE LOGIC HERE
-            # create a list of good ones from global relays list and save to self.fast_relays
-            # use ','.join(fast_relays) ? look up cli arg format
+            self.most_recent = self.snapshot.backup()
+            self.relays = self.booster.get_relays()
             self.start()
             backup_is_recent = True
             sent_interrupt = False
@@ -147,7 +169,6 @@ class Node:
             self.terminate()
             sleep(5)
             self.kill()
-            self.most_recent = self.snapshot.backup()
 
 
 node = Node()
@@ -179,13 +200,6 @@ node.run()
 # figure out why one process exiting doesn't trigger exception and cause kill loop
 # turn off node for 10 min every 24 hrs?
 # - implement mev boost
-#   - every 30 days, do GET req for all urls and rebuild relays file
-#   - route to test /relay/v1/data/bidtraces/proposer_payload_delivered - make sure 200 response.ok
-#   - remove outliers, test script in container to see response time results
-#   - ping all urls, wait 1 sec, ping all, etc (ping all 5 times total - storing in dict w url key and val is list of res times)
-#   - calculate avg (instead of storing list, could also store res_time / 5 and keep adding)
-#   - figure out how to identify outliers
-# MEV boost
 
 # https://github.com/eth-educators/ethstaker-guides/blob/main/prepare-for-the-merge.md#choosing-and-configuring-an-mev-solution
 
