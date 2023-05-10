@@ -40,18 +40,20 @@ class Node:
         return process
 
     def execution(self):
-        args_list = []
+        args = [
+            '--http', '--http.api', 'eth,net,engine,admin', '--metrics',
+            # try this
+            # '--metrics.expensive',
+        ]
 
         if DEV:
-            args_list.append("--goerli")
+            args.append("--goerli")
         else:
-            args_list.append("--mainnet")
+            args.append("--mainnet")
 
         if AWS:
-            args_list += ["--datadir", self.geth_data_dir]
+            args += ["--datadir", self.geth_data_dir]
 
-        default_args = ['--http', '--http.api', 'eth,net,engine,admin']
-        args = args_list + default_args
         cmd = ['geth'] + args
 
         return self.run_cmd(cmd)
@@ -198,15 +200,21 @@ node.run()
 
 
 # TODO:
-# - get goerli eth - https://testnetbridge.com/
-# - set suggested fee address
-# - security best practices
-# https://docs.prylabs.network/docs/security-best-practices
-# - broadcast public dns, use elastic ip, route 53 record?
-# https://docs.prylabs.network/docs/prysm-usage/p2p-host-ip#broadcast-your-public-ip-address
+# 1
 # - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free, Beaconcha.in and node exporter
+# 2
 # figure out why one process exiting doesn't trigger exception and cause kill loop
 # turn off node for 10 min every 24 hrs?
+# 3
+# - broadcast public dns, use elastic ip, route 53 record?
+# https://docs.prylabs.network/docs/prysm-usage/p2p-host-ip#broadcast-your-public-ip-address
+# 4
+# - get goerli eth - https://testnetbridge.com/
+# - set suggested fee address - (use validator address?)
+# 5
+# - security best practices
+# https://docs.prylabs.network/docs/security-best-practices
+
 
 # https://someresat.medium.com/guide-to-staking-on-ethereum-ubuntu-goerli-prysm-4a640794e8b5
 # https://someresat.medium.com/guide-to-staking-on-ethereum-ubuntu-prysm-581fb1969460
