@@ -37,6 +37,12 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
+      - name: Generate Prometheus config
+        env:
+          GRAF_USER: ${{ secrets.GRAF_USER }}
+          GRAF_PASS: ${{ secrets.GRAF_PASS }}
+        run: scripts/append_prometheus.sh
+
       - name: Build and push
         uses: docker/build-push-action@v4
         env:
