@@ -39,6 +39,16 @@ Conditions:
     !Equals [!Ref Arch, amd64]
 
 Resources:
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties: 
+      Domain: String
+      # InstanceId: String
+      NetworkBorderGroup: String
+      PublicIpv4Pool: String
+      Tags: 
+        - Tag
+  TransferAddress: String
   TaskRole:
     Type: AWS::IAM::Role
     Properties:

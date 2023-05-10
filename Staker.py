@@ -235,7 +235,7 @@ node.run()
 # TODO:
 # 1
 # - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free, Beaconcha.in, client-stats, node exporter
-# need to connect client-stats with beaconcha.in
+# need to test in grafana and on beaconcha.in
 # 2
 # figure out why one process exiting doesn't trigger exception and cause kill loop
 # turn off node for 10 min every 24 hrs?
