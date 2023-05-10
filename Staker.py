@@ -5,7 +5,7 @@ import logging
 from time import sleep
 import subprocess
 from glob import glob
-from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV
+from Constants import AWS, SNAPSHOT_DAYS, DEV
 from Backup import Snapshot
 from MEV import Booster
 
@@ -113,6 +113,11 @@ class Node:
         cmd = ['prometheus'] + args
         return self.run_cmd(cmd)
 
+    def os_stats(self):
+        args = []
+        cmd = ['node_exporter'] + args
+        return self.run_cmd(cmd)
+
     def start(self):
         processes = [
             {
@@ -133,7 +138,11 @@ class Node:
             },
             {
                 'process': self.prometheus(),
-                'prefix': '// _PROMETHEUS ////'
+                'prefix': '// _PROMETHEUS //'
+            },
+            {
+                'process': self.os_stats(),
+                'prefix': '--- OS_STATS_ ---'
             }
         ]
         for meta in processes:

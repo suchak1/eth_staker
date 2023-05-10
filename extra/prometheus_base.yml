@@ -25,6 +25,9 @@ scrape_configs:
     static_configs:
     metrics_path: /debug/metrics/prometheus
       - targets: ['localhost:6060']
+  - job_name: 'os'
+    static_configs:
+      - targets: ['localhost:9100']
   # - job_name: 'slasher'
   #   static_configs:
   #     - targets: ['localhost:8082']
