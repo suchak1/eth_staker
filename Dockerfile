@@ -67,14 +67,22 @@ ENV MEV_ARCHIVE "mev-boost_${MEV_VERSION}_linux_${ARCH}"
 ENV PROM_VERSION 2.44.0-rc.2
 ENV PROM_ARCHIVE "prometheus-${PROM_VERSION}.${PLATFORM_ARCH}"
 
+ENV NODE_VERSION 1.5.0
+ENV NODE_ARCHIVE "node_exporter-${NODE_VERSION}.${PLATFORM_ARCH}"
+
 RUN curl -LO "https://github.com/flashbots/mev-boost/releases/download/v${MEV_VERSION}/${MEV_ARCHIVE}.tar.gz"
 RUN curl -LO "https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/${PROM_ARCHIVE}.tar.gz"
+RUN curl -LO "https://github.com/prometheus/node_exporter/releases/download/v${NODE_VERSION}/${NODE_ARCHIVE}.tar.gz"
+
 RUN tar -xvzf "${MEV_ARCHIVE}.tar.gz"
 RUN tar -xvzf "${PROM_ARCHIVE}.tar.gz"
+RUN tar -xvzf "${NODE_ARCHIVE}.tar.gz"
+
 RUN mv "${MEV_ARCHIVE}/mev-boost" . && rm -rf "${MEV_ARCHIVE}"
 RUN mv "${PROM_ARCHIVE}/prometheus" . && rm -rf "${PROM_ARCHIVE}"
+RUN mv "${NODE_ARCHIVE}/node_exporter" . && rm -rf "${NODE_ARCHIVE}"
 
-RUN chmod +x mev-boost prometheus
+RUN chmod +x mev-boost prometheus node_exporter
 # Add extra to path
 ENV PATH "${PATH}:${EXTRA_DIR}"
 
