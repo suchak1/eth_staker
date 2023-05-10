@@ -43,7 +43,7 @@ class Node:
         args = [
             '--http', '--http.api', 'eth,net,engine,admin', '--metrics',
             # try this
-            # '--metrics.expensive',
+            '--metrics.expensive',
         ]
 
         if DEV:
@@ -90,12 +90,14 @@ class Node:
         return self.run_cmd(cmd)
 
     def validation(self):
-        args = ['--enable-builder']
+        args = [
+            # ENABLE THIS FOR MEV
+            # '--enable-builder'
+        ]
         cmd = ['ping', 'localhost'] + args
         return self.run_cmd(cmd)
 
     def mev(self):
-        # use ','.join(fast_relays) ? look up cli arg format
         args = ['-relay-check']
         if DEV:
             args.append("-goerli")
@@ -206,7 +208,7 @@ node.run()
 # figure out why one process exiting doesn't trigger exception and cause kill loop
 # turn off node for 10 min every 24 hrs?
 # 3
-# - broadcast public dns, use elastic ip, route 53 record?
+# - broadcast public dns, use elastic ip, route 53 record? - a name record that points to ip
 # https://docs.prylabs.network/docs/prysm-usage/p2p-host-ip#broadcast-your-public-ip-address
 # 4
 # - get goerli eth - https://testnetbridge.com/
