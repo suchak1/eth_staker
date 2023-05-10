@@ -66,6 +66,7 @@ jobs:
           Subnet: ${{ secrets.SUBNET }}
           VPC: ${{ secrets.VPC }}
           SSHPort: ${{ secrets.SSH_PORT }}
+          BeaconChainKeY: ${{ secrets.BEACONCHAIN_KEY }}
         run: |
           if [[ "${DEPLOY_ENV}" = "dev" ]]
           then
@@ -79,6 +80,7 @@ jobs:
           VPC=${VPC}
           Arch=${ARCH}
           SSHPort=${SSHPort}
+          BeaconChainKey=${BeaconChainKey}
           " >> "${ParamsFile}"
 
       - name: Update ECS stack

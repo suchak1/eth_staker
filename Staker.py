@@ -5,7 +5,7 @@ import logging
 from time import sleep
 import subprocess
 from glob import glob
-from Constants import AWS, SNAPSHOT_DAYS, DEV
+from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY
 from Backup import Snapshot
 from MEV import Booster
 
@@ -118,6 +118,15 @@ class Node:
         cmd = ['node_exporter'] + args
         return self.run_cmd(cmd)
 
+    def client_stats(self):
+        args = [
+            '--beacon-node-metrics-url=http://localhost:8080/metrics'
+            '--validator-metrics-url=http://localhost:8081/metrics',
+            f'--clientstats-api-url=https://beaconcha.in/api/v1/stats/{BEACONCHAIN_KEY}/{DEPLOY_ENV}'
+        ]
+        cmd = ['client-stats'] + args
+        return self.run_cmd(cmd)
+
     def start(self):
         processes = [
             {
@@ -143,6 +152,10 @@ class Node:
             {
                 'process': self.os_stats(),
                 'prefix': '--- OS_STATS_ ---'
+            },
+            {
+                'process': self.client_stats(),
+                'prefix': '    BEACONCHA.IN'
             }
         ]
         for meta in processes:
@@ -222,6 +235,7 @@ node.run()
 # TODO:
 # 1
 # - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free, Beaconcha.in, client-stats, node exporter
+# need to connect client-stats with beaconcha.in
 # 2
 # figure out why one process exiting doesn't trigger exception and cause kill loop
 # turn off node for 10 min every 24 hrs?

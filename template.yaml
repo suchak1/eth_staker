@@ -30,6 +30,9 @@ Parameters:
     Description: AMI ID
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ecs/optimized-ami/amazon-linux-2023/arm64/recommended/image_id
+  BeaconChainKey:
+    NoEcho: true
+
 
 Conditions:
   UseAMD64:
@@ -81,8 +84,10 @@ Resources:
           Environment:
             - Name: AWS_DEFAULT_REGION
               Value: !Ref AWS::Region
-            - NAME: AWS
+            - Name: AWS
               Value: true
+            - Name: BEACONCHAIN_KEY
+              Value: !Ref BeaconChainKey
           Essential: true
           MountPoints:
             - ContainerPath: /mnt/ebs
