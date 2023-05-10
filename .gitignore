@@ -3,3 +3,4 @@ consensus
 execution
 *.env
 .DS_Store
+prometheus.yml
