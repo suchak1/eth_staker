@@ -108,6 +108,11 @@ class Node:
         cmd = ['mev-boost'] + args
         return self.run_cmd(cmd)
 
+    def prometheus(self):
+        args = ['--config.file=extra/prometheus.yml']
+        cmd = ['prometheus'] + args
+        return self.run_cmd(cmd)
+
     def start(self):
         processes = [
             {
@@ -125,6 +130,10 @@ class Node:
             {
                 'process': self.mev(),
                 'prefix': "+++ MEV_BOOST +++"
+            },
+            {
+                'process': self.prometheus(),
+                'prefix': '// _PROMETHEUS ////'
             }
         ]
         for meta in processes:
