@@ -11,7 +11,8 @@ ENV ARCH "${ARCH:-arm64}"
 
 ENV ETH_DIR "${HOME}/ethereum"
 ENV EXEC_DIR "${ETH_DIR}/execution"
-ENV EXTRA_DIR "${ETH_DIR}/extra"
+ENV EXTRA_DIR_BASE "/extra"
+ENV EXTRA_DIR "${ETH_DIR}${EXTRA_DIR_BASE}"
 ENV PRYSM_DIR_BASE "/consensus/prysm"
 ENV PRYSM_DIR "${ETH_DIR}${PRYSM_DIR_BASE}"
 
@@ -60,6 +61,8 @@ RUN bash download_checkpoint.sh
 # Download mev-boost and monitoring deps (extra)
 RUN mkdir -p "${EXTRA_DIR}"
 WORKDIR "${EXTRA_DIR}"
+
+COPY ".${EXTRA_DIR_BASE}/prometheus.yml" .
 
 ENV MEV_VERSION 1.5.1-alpha1
 ENV MEV_ARCHIVE "mev-boost_${MEV_VERSION}_linux_${ARCH}"
