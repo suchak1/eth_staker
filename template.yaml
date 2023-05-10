@@ -39,6 +39,33 @@ Conditions:
     !Equals [!Ref Arch, amd64]
 
 Resources:
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies: 
+        - PolicyName: AssociateEIP
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ec2:DescribeAddresses'
+                  - 'ec2:AllocateAddress'
+                  - 'ec2:DescribeInstances'
+                  - 'ec2:AssociateAddress'
+                Resource: '*'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+      RoleName: !Sub "${DeployEnv}StakingInstanceRole"
   ElasticIP:
     Type: AWS::EC2::EIP
     Properties: 
@@ -46,9 +73,7 @@ Resources:
       # InstanceId: String
       NetworkBorderGroup: String
       PublicIpv4Pool: String
-      Tags: 
-        - Tag
-  TransferAddress: String
+      TransferAddress: String
   TaskRole:
     Type: AWS::IAM::Role
     Properties:
