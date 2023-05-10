@@ -11,6 +11,7 @@ ENV ARCH "${ARCH:-arm64}"
 
 ENV ETH_DIR "${HOME}/ethereum"
 ENV EXEC_DIR "${ETH_DIR}/execution"
+ENV EXTRA_DIR "${ETH_DIR}/extra"
 ENV PRYSM_DIR_BASE "/consensus/prysm"
 ENV PRYSM_DIR "${ETH_DIR}${PRYSM_DIR_BASE}"
 
@@ -42,16 +43,11 @@ ENV PATH "${PATH}:${EXEC_DIR}"
 RUN mkdir -p "${PRYSM_DIR}"
 WORKDIR "${PRYSM_DIR}"
 ENV PRYSM_VERSION v4.0.3
-ENV MEV_VERSION 1.5.1-alpha1
-ENV MEV_ARCHIVE "mev-boost_${MEV_VERSION}_linux_${ARCH}"
 RUN curl -Lo beacon-chain "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/beacon-chain-${PRYSM_VERSION}-${PLATFORM_ARCH}"
 RUN curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/validator-${PRYSM_VERSION}-${PLATFORM_ARCH}"
 RUN curl -Lo prysmctl "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/prysmctl-${PRYSM_VERSION}-${PLATFORM_ARCH}"
-RUN curl -LO "https://github.com/flashbots/mev-boost/releases/download/v${MEV_VERSION}/${MEV_ARCHIVE}.tar.gz"
-RUN tar -xvzf "${MEV_ARCHIVE}.tar.gz"
-RUN mv "${MEV_ARCHIVE}/mev-boost" . && rm -rf "${MEV_ARCHIVE}"
 
-RUN chmod +x beacon-chain validator prysmctl mev-boost
+RUN chmod +x beacon-chain validator prysmctl
 # Add prysm to path
 ENV PATH "${PATH}:${PRYSM_DIR}"
 
@@ -60,6 +56,27 @@ COPY ".${PRYSM_DIR_BASE}/download_checkpoint.sh" .
 # Genesis block for goerli testnet
 COPY ".${PRYSM_DIR_BASE}/genesis.ssz" .
 RUN bash download_checkpoint.sh
+
+# Download mev-boost and monitoring deps (extra)
+RUN mkdir -p "${EXTRA_DIR}"
+WORKDIR "${EXTRA_DIR}"
+
+ENV MEV_VERSION 1.5.1-alpha1
+ENV MEV_ARCHIVE "mev-boost_${MEV_VERSION}_linux_${ARCH}"
+
+ENV PROM_VERSION 2.44.0-rc.2
+ENV PROM_ARCHIVE "prometheus-${PROM_VERSION}.${PLATFORM_ARCH}"
+
+RUN curl -LO "https://github.com/flashbots/mev-boost/releases/download/v${MEV_VERSION}/${MEV_ARCHIVE}.tar.gz"
+RUN curl -LO "https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/${PROM_ARCHIVE}.tar.gz"
+RUN tar -xvzf "${MEV_ARCHIVE}.tar.gz"
+RUN tar -xvzf "${PROM_ARCHIVE}.tar.gz"
+RUN mv "${MEV_ARCHIVE}/mev-boost" . && rm -rf "${MEV_ARCHIVE}"
+RUN mv "${PROM_ARCHIVE}/prometheus" . && rm -rf "${PROM_ARCHIVE}"
+
+RUN chmod +x mev-boost prometheus
+# Add extra to path
+ENV PATH "${PATH}:${EXTRA_DIR}"
 
 # Run app
 WORKDIR "${ETH_DIR}"
