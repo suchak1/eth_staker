@@ -45,22 +45,22 @@ Resources:
     DependsOn: ElasticIP
     Type: AWS::Route53::RecordSet
     Properties: 
-      AliasTarget: 
-        AliasTarget
-      CidrRoutingConfig: 
-        CidrRoutingConfig
+      # AliasTarget: 
+      #   AliasTarget
+      # CidrRoutingConfig: 
+      #   CidrRoutingConfig
       # Comment: String
-      Failover: String
-      GeoLocation: 
-        GeoLocation
-      HealthCheckId: String
+      # Failover: String
+      # GeoLocation: 
+      #   GeoLocation
+      # HealthCheckId: String
       HostedZoneName: forcepu.sh
-      MultiValueAnswer: Boolean
+      # MultiValueAnswer: Boolean
       Name: !Join [ "", [!If [IsProd, "", "dev."], eth.forcepu.sh ] ]
       Region: !Ref AWS::Region
       ResourceRecords: 
-        - String
-      SetIdentifier: String
+        - !GetAtt ElasticIP.PublicIp
+      # SetIdentifier: String
       # TTL: String
       Type: A
       # Weight: Integer
