@@ -203,6 +203,10 @@ Resources:
             IpProtocol: tcp
             FromPort: !Ref SSHPort
             ToPort: !Ref SSHPort
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
           # Consensus
           - CidrIp: 0.0.0.0/0
             IpProtocol: tcp
@@ -389,8 +393,8 @@ Resources:
             echo "${!INSTANCE_ID}" > /mnt/ebs/INSTANCE_ID
 
             # Change default SSH port
-            sed 's/#Port\s22/Port ${SSHPort}/' /etc/ssh/sshd_config
-            service sshd restart
+            # sed 's/#Port\s22/Port ${SSHPort}/' /etc/ssh/sshd_config
+            # service sshd restart
 
             # Associate Elastic IP
             MAXWAIT=3
