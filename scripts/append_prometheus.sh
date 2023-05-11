@@ -1,4 +1,4 @@
-if [[ $CI != true ]]; then
+if [[ $CI == true ]]; then
 
   base_yml=$(cat extra/prometheus_base.yml)
 

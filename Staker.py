@@ -242,6 +242,7 @@ node.run()
 # 3
 # - broadcast public dns, use elastic ip, route 53 record? - a name record that points to ip
 # https://docs.prylabs.network/docs/prysm-usage/p2p-host-ip#broadcast-your-public-ip-address
+# figure out how to associate ssl certs for https?
 # 4
 # - get goerli eth - https://testnetbridge.com/
 # - set suggested fee address - (use validator address?)
