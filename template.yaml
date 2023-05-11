@@ -135,6 +135,8 @@ Resources:
                   - 'ec2:DescribeSnapshots'
                   - 'ec2:DescribeVolumes'
                   - 'ec2:DescribeInstanceAttribute'
+                  - 'ec2:DescribeLaunchTemplates'
+                  - 'ec2:DescribeLaunchTemplateVersions'
                 Resource: '*'
               - Effect: Allow
                 Action: 
