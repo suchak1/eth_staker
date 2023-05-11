@@ -71,9 +71,9 @@ Resources:
     Properties: 
       Domain: String
       # InstanceId: String
-      NetworkBorderGroup: String
-      PublicIpv4Pool: String
-      TransferAddress: String
+      NetworkBorderGroup: !Ref AWS::Region
+      # PublicIpv4Pool: String
+      # TransferAddress: String
   InstanceProfile:
     DependsOn: InstanceRole
     Type: AWS::IAM::InstanceProfile
