@@ -132,17 +132,8 @@ Resources:
                 Action: 
                   - 'ec2:CreateSnapshot'
                   - 'ec2:DeleteSnapshot'
-                  - 'ec2:DescribeSnapshots'
+                  - 'ec2:Describe*'
                   - 'ec2:GetLaunchTemplateData'
-                  # From stackoverflow about get_launch_template
-                  - 'ec2:DescribeLaunchTemplates'
-                  - 'ec2:DescribeLaunchTemplateVersions'
-                  # From docs about get_launch_template
-                  - 'ec2:DescribeSpotInstanceRequests'
-                  - 'ec2:DescribeInstanceCreditSpecifications'
-                  - 'ec2:DescribeVolumes'
-                  - 'ec2:DescribeInstanceAttribute'
-                  - 'ec2:DescribeElasticGpus'
                 Resource: '*'
               - Effect: Allow
                 Action: 
