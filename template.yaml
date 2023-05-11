@@ -31,8 +31,8 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ecs/optimized-ami/amazon-linux-2023/arm64/recommended/image_id
   BeaconChainKey:
+    Type: "String"
     NoEcho: true
-
 
 Conditions:
   UseAMD64:
