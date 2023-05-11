@@ -74,6 +74,14 @@ Resources:
       NetworkBorderGroup: String
       PublicIpv4Pool: String
       TransferAddress: String
+  InstanceProfile:
+    DependsOn: InstanceRole
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      InstanceProfileName: !Sub "${DeployEnv}StakingInstanceProfile"
+      # Path: String
+      Roles: 
+        - !Sub "${DeployEnv}StakingInstanceRole"
   TaskRole:
     Type: AWS::IAM::Role
     Properties:
@@ -255,7 +263,10 @@ Resources:
       VPCZoneIdentifier: 
         - !Ref Subnet
   LaunchTemplate:
-    DependsOn: SecurityGroup  
+    DependsOn: 
+      - SecurityGroup
+      - InstanceProfile
+      - ElasticIP
     Type: AWS::EC2::LaunchTemplate
     Properties: 
       LaunchTemplateData: 
@@ -278,7 +289,7 @@ Resources:
         DisableApiTermination: false
         EbsOptimized: true
         IamInstanceProfile: 
-          Name: ecsInstanceRole
+          Name: !Sub "${DeployEnv}StakingInstanceProfile"
         # This is Amazon Linux 2023 AMI for amd64
         ImageId: !If [UseAMD64, !Ref ECSOptimizedAMD64, !Ref ECSOptimizedARM64]
         InstanceInitiatedShutdownBehavior: terminate
