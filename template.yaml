@@ -65,7 +65,7 @@ Resources:
       ResourceRecords: 
         - !GetAtt ElasticIP.PublicIp
       # SetIdentifier: String
-      # TTL: 86400
+      TTL: 172800
       Type: A
       # Weight: Integer
   InstanceRole:
