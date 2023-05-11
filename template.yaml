@@ -33,6 +33,9 @@ Parameters:
   BeaconChainKey:
     Type: "String"
     NoEcho: true
+  HostedZoneId:
+    Type: "String"
+    NoEcho: true
 
 Conditions:
   UseAMD64:
@@ -54,7 +57,7 @@ Resources:
       # GeoLocation: 
       #   GeoLocation
       # HealthCheckId: String
-      HostedZoneName: "forcepu.sh"
+      HostedZoneId: !Ref HostedZoneId
       # MultiValueAnswer: Boolean
       Name: !Join [ "", [!If [IsProd, "", "dev."], eth.forcepu.sh ] ]
       Region: !Ref AWS::Region
