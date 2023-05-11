@@ -54,7 +54,7 @@ Resources:
       # GeoLocation: 
       #   GeoLocation
       # HealthCheckId: String
-      HostedZoneName: forcepu.sh
+      HostedZoneName: "forcepu.sh"
       # MultiValueAnswer: Boolean
       Name: !Join [ "", [!If [IsProd, "", "dev."], eth.forcepu.sh ] ]
       Region: !Ref AWS::Region
