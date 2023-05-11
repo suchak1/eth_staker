@@ -155,7 +155,7 @@ class Node:
             },
             {
                 'process': self.client_stats(),
-                'prefix': '    BEACONCHA.IN '
+                'prefix': '____BEACONCHA.IN_'
             }
         ]
         for meta in processes:
