@@ -69,7 +69,7 @@ Resources:
   ElasticIP:
     Type: AWS::EC2::EIP
     Properties: 
-      Domain: String
+      Domain: vpc
       # InstanceId: String
       NetworkBorderGroup: !Ref AWS::Region
       # PublicIpv4Pool: String
