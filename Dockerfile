@@ -82,7 +82,8 @@ RUN tar -xvzf "${MEV_ARCHIVE}.tar.gz"
 RUN tar -xvzf "${PROM_ARCHIVE}.tar.gz"
 RUN tar -xvzf "${NODE_ARCHIVE}.tar.gz"
 
-RUN mv "${MEV_ARCHIVE}/mev-boost" . && rm -rf "${MEV_ARCHIVE}"
+# mev-boost archive doesn't have internal folder
+# RUN mv "${MEV_ARCHIVE}/mev-boost" . && rm -rf "${MEV_ARCHIVE}"
 RUN mv "${PROM_ARCHIVE}/prometheus" . && rm -rf "${PROM_ARCHIVE}"
 RUN mv "${NODE_ARCHIVE}/node_exporter" . && rm -rf "${NODE_ARCHIVE}"
 
