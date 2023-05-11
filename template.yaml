@@ -57,14 +57,15 @@ Resources:
       # GeoLocation: 
       #   GeoLocation
       # HealthCheckId: String
-      HostedZoneId: !Ref HostedZoneId
+      # HostedZoneId: !Ref HostedZoneId
+      HostedZoneName: forcepu.sh
       # MultiValueAnswer: Boolean
       Name: !Join [ "", [!If [IsProd, "", "dev."], eth.forcepu.sh ] ]
-      Region: !Ref AWS::Region
+      # Region: !Ref AWS::Region
       ResourceRecords: 
         - !GetAtt ElasticIP.PublicIp
       # SetIdentifier: String
-      TTL: 86400
+      # TTL: 86400
       Type: A
       # Weight: Integer
   InstanceRole:
