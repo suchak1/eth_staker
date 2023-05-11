@@ -37,31 +37,33 @@ Parameters:
 Conditions:
   UseAMD64:
     !Equals [!Ref Arch, amd64]
+  IsProd:
+    !Equals [!Ref DeployEnv, prod]
 
 Resources:
   EIPDNSRecord:
+    DependsOn: ElasticIP
     Type: AWS::Route53::RecordSet
     Properties: 
       AliasTarget: 
         AliasTarget
       CidrRoutingConfig: 
         CidrRoutingConfig
-      Comment: String
+      # Comment: String
       Failover: String
       GeoLocation: 
         GeoLocation
       HealthCheckId: String
-      HostedZoneId: String
-      HostedZoneName: String
+      HostedZoneName: forcepu.sh
       MultiValueAnswer: Boolean
-      Name: String
-      Region: String
+      Name: !Join [ "", [!If [IsProd, "", "dev."], eth.forcepu.sh ] ]
+      Region: !Ref AWS::Region
       ResourceRecords: 
         - String
       SetIdentifier: String
-      TTL: String
-      Type: String
-      Weight: Integer
+      # TTL: String
+      Type: A
+      # Weight: Integer
   InstanceRole:
     Type: AWS::IAM::Role
     Properties:
