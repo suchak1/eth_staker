@@ -381,7 +381,7 @@ Resources:
             
             # Write instance id to volume
             INSTANCE_ID=$(awk -F' '  '{print $NF}' <<< $(ec2-metadata --instance-id))
-            echo "${INSTANCE_ID}" > /mnt/ebs/INSTANCE_ID
+            echo "${!INSTANCE_ID}" > /mnt/ebs/INSTANCE_ID
 
             # Change default SSH port
             sed 's/#Port\s22/Port ${SSHPort}/' /etc/ssh/sshd_config
