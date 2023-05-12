@@ -74,9 +74,12 @@ ENV PROM_ARCHIVE "prometheus-${PROM_VERSION}.${PLATFORM_ARCH}"
 ENV NODE_VERSION 1.5.0
 ENV NODE_ARCHIVE "node_exporter-${NODE_VERSION}.${PLATFORM_ARCH}"
 
+ENV BEACONCHAIN_VERSION 0.1.0
+
 RUN curl -LO "https://github.com/flashbots/mev-boost/releases/download/v${MEV_VERSION}/${MEV_ARCHIVE}.tar.gz"
 RUN curl -LO "https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/${PROM_ARCHIVE}.tar.gz"
 RUN curl -LO "https://github.com/prometheus/node_exporter/releases/download/v${NODE_VERSION}/${NODE_ARCHIVE}.tar.gz"
+RUN curl -Lo eth2-client-metrics-exporter "https://github.com/gobitfly/eth2-client-metrics-exporter/releases/download/${BEACONCHAIN_VERSION}/eth2-client-metrics-exporter-${PLATFORM_ARCH}"
 
 RUN tar -xvzf "${MEV_ARCHIVE}.tar.gz"
 RUN tar -xvzf "${PROM_ARCHIVE}.tar.gz"
@@ -87,7 +90,7 @@ RUN tar -xvzf "${NODE_ARCHIVE}.tar.gz"
 RUN mv "${PROM_ARCHIVE}/prometheus" . && rm -rf "${PROM_ARCHIVE}"
 RUN mv "${NODE_ARCHIVE}/node_exporter" . && rm -rf "${NODE_ARCHIVE}"
 
-RUN chmod +x mev-boost prometheus node_exporter
+RUN chmod +x mev-boost prometheus node_exporter eth2-client-metrics-exporter
 # Add extra to path
 ENV PATH "${PATH}:${EXTRA_DIR}"
 
