@@ -248,8 +248,6 @@ node.run()
 
 # TODO:
 # 1
-# - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free, Beaconcha.in, client-stats, node exporter
-# need to test in grafana and on beaconcha.in
 # 2
 # 4
 # - get goerli eth - https://testnetbridge.com/
@@ -263,6 +261,7 @@ node.run()
 # https://someresat.medium.com/guide-to-staking-on-ethereum-ubuntu-prysm-581fb1969460
 
 # Extra:
+# - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free, node exporter
 # - use spot instances
 #   - multiple zones
 #   - multiple instance types
