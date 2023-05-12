@@ -76,7 +76,9 @@ class Node:
             args_list.append('--mainnet')
 
         if AWS:
-            args_list += ["--datadir", self.prysm_data_dir]
+            args_list.append(f"--datadir={self.prysm_data_dir}")
+            args.list.append(
+                f"--p2p-host-dns={'dev.' if DEV else ''}eth.forcepu.sh")
 
         state_filename = glob(f'{prysm_dir}/state*.ssz')[0]
         block_filename = glob(f'{prysm_dir}/block*.ssz')[0]
@@ -238,11 +240,8 @@ node.run()
 # need to test in grafana and on beaconcha.in
 # 2
 # figure out why one process exiting doesn't trigger exception and cause kill loop
+# this seems to be working fine with prometheus config error but not beacon-node exiting?
 # turn off node for 10 min every 24 hrs?
-# 3
-# - broadcast public dns, use elastic ip, route 53 record? - a name record that points to ip
-# https://docs.prylabs.network/docs/prysm-usage/p2p-host-ip#broadcast-your-public-ip-address
-# figure out how to associate ssl certs for https?
 # 4
 # - get goerli eth - https://testnetbridge.com/
 # - set suggested fee address - (use validator address?)
