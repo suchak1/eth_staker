@@ -28,8 +28,7 @@ class Node:
         self.ipc_path = self.geth_data_dir + ipc_postfix
         self.snapshot = Snapshot()
         self.booster = Booster()
-        self.soft_kill = False
-        self.hard_kill = False
+        self.kill_in_progress = False
 
     def run_cmd(self, cmd):
         print(f"Running cmd: {' '.join(cmd)}")
@@ -171,8 +170,8 @@ class Node:
         return processes
 
     def signal_processes(self, sig, hard=True, prefix):
-        if not (soft and self.kill_in_progress):
-            print(f'{prefix} all processes... [{soft}]')
+        if hard and not self.kill_in_progress:
+            print(f'{prefix} all processes... [{hard}]')
             for meta in self.processes:
                 try:
                     os.kill(meta['process'].pid, sig)
@@ -180,13 +179,13 @@ class Node:
                     logging.exception(e)
 
     def interrupt(self, hard=False):
-        self.signal_processes(signal.SIGINT, soft, 'Interrupting')
+        self.signal_processes(signal.SIGINT, hard, 'Interrupting')
 
     def terminate(self, hard=False):
-        self.signal_processes(signal.SIGTERM, soft, 'Terminating')
+        self.signal_processes(signal.SIGTERM, hard, 'Terminating')
 
-    def kill(self, soft, hard=False):
-        self.signal_processes(signal.SIGKILL, soft, 'Killing')
+    def kill(self, hard=False):
+        self.signal_processes(signal.SIGKILL, hard, 'Killing')
 
     def print_line(self, prefix, stdout):
         line = stdout.__next__().decode('UTF-8').strip()
@@ -246,9 +245,6 @@ node.run()
 # - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free, Beaconcha.in, client-stats, node exporter
 # need to test in grafana and on beaconcha.in
 # 2
-# figure out why one process exiting doesn't trigger exception and cause kill loop
-# this seems to be working fine with prometheus config error but not beacon-node exiting?
-# turn off node for 10 min every 24 hrs?
 # 4
 # - get goerli eth - https://testnetbridge.com/
 # - set suggested fee address - (use validator address?)
@@ -266,15 +262,12 @@ node.run()
 #   - multiple instance types
 #   - enable capacity rebalancing
 #   - only use in dev until stable for prod
+# turn off node for 10 min every 24 hrs?
 # - data integrity protection
 #   - shutdown / terminate instance if process fails and others continue => forces new vol from last snapshot
 #       - perhaps implement counter so if 3 process failures in a row, terminate instance
 #   - use `geth --exec '(eth?.syncing?.currentBlock/eth?.syncing?.highestBlock)*100' attach --datadir /mnt/ebs/.ethereum/goerli`
 #       - will yield NaN if already synced or 68.512213 if syncing
-#   - figure out why deployment is causing disgraceful exit, geth is noticing kill signal
-#       - container should be getting 30 sec to shutdown with SIGTERM or SIGINT
-#       - https://stackoverflow.com/questions/63731704/how-to-check-if-ecs-is-gracefully-stopping-my-application-in-container#comment116914933_63731704
-#       - https://medium.com/@dar3.st/graceful-termination-of-a-node-app-in-aws-ecs-29e8c596c47d
 # - enable swap space if need more memory w 4vCPUs
 #   - disabled on host by default for ecs optimized amis
 #   - also need to set swap in task def
