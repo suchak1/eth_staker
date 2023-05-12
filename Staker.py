@@ -124,6 +124,8 @@ class Node:
             '--beacon-node-metrics-url=http://localhost:8080/metrics'
             # '--validator-metrics-url=http://localhost:8081/metrics',
             f'--clientstats-api-url=https://beaconcha.in/api/v1/stats/{BEACONCHAIN_KEY}/{DEPLOY_ENV}'
+            # first try https://beaconcha.in/api/v1/client/metrics?apikey=<apikey>&machine=<machine>
+            # then try https://github.com/gobitfly/eth2-client-metrics-exporter
         ]
         cmd = ['client-stats'] + args
         return self.run_cmd(cmd)
@@ -265,6 +267,8 @@ node.run()
 #       - will yield NaN if already synced or 68.512213 if syncing
 #   - figure out why deployment is causing disgraceful exit, geth is noticing kill signal
 #       - container should be getting 30 sec to shutdown with SIGTERM or SIGINT
+#       - https://stackoverflow.com/questions/63731704/how-to-check-if-ecs-is-gracefully-stopping-my-application-in-container#comment116914933_63731704
+#       - https://medium.com/@dar3.st/graceful-termination-of-a-node-app-in-aws-ecs-29e8c596c47d
 # - enable swap space if need more memory w 4vCPUs
 #   - disabled on host by default for ecs optimized amis
 #   - also need to set swap in task def
