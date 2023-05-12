@@ -59,7 +59,7 @@ class Node:
         return self.run_cmd(cmd)
 
     def consensus(self):
-        args_list = [
+        args = [
             '--accept-terms-of-use',
             f'--execution-endpoint={self.ipc_path}',
 
@@ -70,24 +70,23 @@ class Node:
         prysm_dir = './consensus/prysm'
 
         if DEV:
-            args_list.append("--prater")
-            args_list.append(f"--genesis-state={prysm_dir}/genesis.ssz")
+            args.append("--prater")
+            args.append(f"--genesis-state={prysm_dir}/genesis.ssz")
         else:
-            args_list.append('--mainnet')
+            args.append('--mainnet')
 
         if AWS:
-            args_list.append(f"--datadir={self.prysm_data_dir}")
-            args.list.append(
+            args.append(f"--datadir={self.prysm_data_dir}")
+            args.append(
                 f"--p2p-host-dns={'dev.' if DEV else ''}eth.forcepu.sh")
 
         state_filename = glob(f'{prysm_dir}/state*.ssz')[0]
         block_filename = glob(f'{prysm_dir}/block*.ssz')[0]
-        default_args = [
+        args += [
             f'--checkpoint-state={state_filename}',
             f'--checkpoint-block={block_filename}',
             # '--suggested-fee-recipient=ETH_WALLET_ADDR_HERE!'
         ]
-        args = args_list + default_args
         cmd = ['beacon-chain'] + args
         return self.run_cmd(cmd)
 
