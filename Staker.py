@@ -43,7 +43,7 @@ class Node:
         args = [
             '--http', '--http.api', 'eth,net,engine,admin', '--metrics',
             # try this
-            '--metrics.expensive',
+            # '--metrics.expensive',
         ]
 
         if DEV:
@@ -122,7 +122,7 @@ class Node:
     def client_stats(self):
         args = [
             '--beacon-node-metrics-url=http://localhost:8080/metrics'
-            '--validator-metrics-url=http://localhost:8081/metrics',
+            # '--validator-metrics-url=http://localhost:8081/metrics',
             f'--clientstats-api-url=https://beaconcha.in/api/v1/stats/{BEACONCHAIN_KEY}/{DEPLOY_ENV}'
         ]
         cmd = ['client-stats'] + args
@@ -146,14 +146,14 @@ class Node:
                 'process': self.mev(),
                 'prefix': "+++ MEV_BOOST +++"
             },
-            {
-                'process': self.prometheus(),
-                'prefix': '// _PROMETHEUS //'
-            },
-            {
-                'process': self.os_stats(),
-                'prefix': '--- OS_STATS_ ---'
-            },
+            # {
+            #     'process': self.prometheus(),
+            #     'prefix': '// _PROMETHEUS //'
+            # },
+            # {
+            #     'process': self.os_stats(),
+            #     'prefix': '--- OS_STATS_ ---'
+            # },
             {
                 'process': self.client_stats(),
                 'prefix': '____BEACONCHA.IN_'
