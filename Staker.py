@@ -122,14 +122,19 @@ class Node:
 
     def client_stats(self):
         args = [
-            '--beacon-node-metrics-url=http://localhost:8080/metrics'
+            # '--beacon-node-metrics-url=http://localhost:8080/metrics'
             # '--validator-metrics-url=http://localhost:8081/metrics',
             # f'--clientstats-api-url=https://beaconcha.in/api/v1/stats/{BEACONCHAIN_KEY}/{DEPLOY_ENV}'
             # first try https://beaconcha.in/api/v1/client/metrics?apikey=<apikey>&machine=<machine>
-            f'--clientstats-api-url=https://beaconcha.in/api/v1/client/metrics?apikey={BEACONCHAIN_KEY}&machine={DEPLOY_ENV}'
+            # f'--clientstats-api-url=https://beaconcha.in/api/v1/client/metrics?apikey={BEACONCHAIN_KEY}&machine={DEPLOY_ENV}'
             # then try https://github.com/gobitfly/eth2-client-metrics-exporter
+            f'--server.address=https://beaconcha.in/api/v1/client/metrics?apikey={BEACONCHAIN_KEY}&machine={DEPLOY_ENV}',
+            '--beaconnode.type=prysm',
+            '--beaconnode.address=http://localhost:8080/metrics'
         ]
-        cmd = ['client-stats'] + args
+        if AWS:
+            args.append('--system.partition=/mnt/ebs')
+        cmd = ['eth2-client-metrics-exporter'] + args
         return self.run_cmd(cmd)
 
     def start(self):
