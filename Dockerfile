@@ -94,4 +94,4 @@ ENV PATH "${PATH}:${EXTRA_DIR}"
 # Run app
 WORKDIR "${ETH_DIR}"
 COPY Staker.py Backup.py Constants.py MEV.py ./
-ENTRYPOINT python3 Staker.py
+ENTRYPOINT ["python3", "Staker.py"]

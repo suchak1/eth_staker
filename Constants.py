@@ -4,6 +4,7 @@ import os
 DEPLOY_ENV = os.environ['DEPLOY_ENV']
 BEACONCHAIN_KEY = os.environ['BEACONCHAIN_KEY']
 DEV = DEPLOY_ENV.lower() == 'dev'
+KILL_TIME = 15
 
 
 def get_env_bool(var_name):

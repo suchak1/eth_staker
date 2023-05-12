@@ -5,7 +5,7 @@ import logging
 from time import sleep
 import subprocess
 from glob import glob
-from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY
+from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME
 from Backup import Snapshot
 from MEV import Booster
 
@@ -28,6 +28,8 @@ class Node:
         self.ipc_path = self.geth_data_dir + ipc_postfix
         self.snapshot = Snapshot()
         self.booster = Booster()
+        self.soft_kill = False
+        self.hard_kill = False
 
     def run_cmd(self, cmd):
         print(f"Running cmd: {' '.join(cmd)}")
@@ -168,21 +170,23 @@ class Node:
         self.processes = processes
         return processes
 
-    def signal_processes(self, sig):
-        for meta in self.processes:
-            try:
-                os.kill(meta['process'].pid, sig)
-            except Exception as e:
-                logging.exception(e)
+    def signal_processes(self, sig, hard=True, prefix):
+        if not (soft and self.kill_in_progress):
+            print(f'{prefix} all processes... [{soft}]')
+            for meta in self.processes:
+                try:
+                    os.kill(meta['process'].pid, sig)
+                except Exception as e:
+                    logging.exception(e)
 
-    def interrupt(self):
-        self.signal_processes(signal.SIGINT)
+    def interrupt(self, hard=False):
+        self.signal_processes(signal.SIGINT, soft, 'Interrupting')
 
-    def terminate(self):
-        self.signal_processes(signal.SIGTERM)
+    def terminate(self, hard=False):
+        self.signal_processes(signal.SIGTERM, soft, 'Terminating')
 
-    def kill(self):
-        self.signal_processes(signal.SIGKILL)
+    def kill(self, soft, hard=False):
+        self.signal_processes(signal.SIGKILL, soft, 'Killing')
 
     def print_line(self, prefix, stdout):
         line = stdout.__next__().decode('UTF-8').strip()
@@ -204,27 +208,29 @@ class Node:
                         backup_is_recent = False
                     if not backup_is_recent and not sent_interrupt:
                         print('Pausing node to initiate snapshot.')
-                        self.interrupt()
+                        self.interrupt(False)
                         # since_signal = time()
                         sent_interrupt = True
                     for meta in self.processes:
                         self.print_line(meta['prefix'], meta['stdout'])
             except Exception as e:
                 logging.exception(e)
-            sleep(5)
-            self.terminate()
-            sleep(5)
-            self.kill()
+            sleep(KILL_TIME)
+            self.terminate(False)
+            sleep(KILL_TIME)
+            self.kill(False)
 
 
 node = Node()
 
 
 def stop_node(*_):
+    node.kill_in_progress = True
     node.interrupt()
-    sleep(3)
+    sleep(KILL_TIME)
     node.terminate()
-    sleep(3)
+    sleep(KILL_TIME)
+    node.kill()
     print('Node stopped.')
     exit(0)
 
