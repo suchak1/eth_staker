@@ -169,7 +169,7 @@ class Node:
         self.processes = processes
         return processes
 
-    def signal_processes(self, sig, hard=True, prefix):
+    def signal_processes(self, sig, prefix, hard=True):
         if hard and not self.kill_in_progress:
             print(f'{prefix} all processes... [{hard}]')
             for meta in self.processes:
@@ -178,14 +178,14 @@ class Node:
                 except Exception as e:
                     logging.exception(e)
 
-    def interrupt(self, hard=False):
-        self.signal_processes(signal.SIGINT, hard, 'Interrupting')
+    def interrupt(self, **kwargs):
+        self.signal_processes(signal.SIGINT, 'Interrupting', **kwargs)
 
-    def terminate(self, hard=False):
-        self.signal_processes(signal.SIGTERM, hard, 'Terminating')
+    def terminate(self, **kwargs):
+        self.signal_processes(signal.SIGTERM, 'Terminating', **kwargs)
 
-    def kill(self, hard=False):
-        self.signal_processes(signal.SIGKILL, hard, 'Killing')
+    def kill(self, **kwargs):
+        self.signal_processes(signal.SIGKILL, 'Killing', **kwargs)
 
     def print_line(self, prefix, stdout):
         line = stdout.__next__().decode('UTF-8').strip()
