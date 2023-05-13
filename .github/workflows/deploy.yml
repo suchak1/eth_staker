@@ -69,6 +69,7 @@ jobs:
           BeaconChainKey: ${{ secrets.BEACONCHAIN_KEY }}
           HostedZoneId: ${{ secrets.HOSTED_ZONE_ID }}
           EthAddr: ${{ secrets.ETH_ADDR }}
+          WalletPass: ${{ secrets.WALLET_PASS }}
         run: |
           if [[ "${DEPLOY_ENV}" = "dev" ]]
           then
@@ -85,6 +86,7 @@ jobs:
           BeaconChainKey=${BeaconChainKey}
           HostedZoneId=${HostedZoneId}
           EthAddr=${EthAddr}
+          WalletPass=${WalletPass}
           " >> "${ParamsFile}"
 
       - name: Update ECS stack

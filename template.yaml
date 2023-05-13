@@ -39,6 +39,9 @@ Parameters:
   EthAddr:
     Type: "String"
     NoEcho: true
+  WalletPass:
+    Type: "String"
+    NoEcho: true
 
 Conditions:
   UseAMD64:
@@ -392,6 +395,11 @@ Resources:
             # Write instance id to volume
             INSTANCE_ID=$(awk -F' '  '{print $NF}' <<< $(ec2-metadata --instance-id))
             echo "${!INSTANCE_ID}" > /mnt/ebs/INSTANCE_ID
+
+            # Write wallet password to volume
+            WALLET_DIR="/mnt/ebs/.eth2validators/prysm-wallet-v2"
+            mkdir -p "${WALLET_DIR}"
+            echo "${WalletPass}" > "${WALLET_DIR}/password.txt"
 
             # Change default SSH port
             sed -i 's/#Port\s22/Port ${SSHPort}/' /etc/ssh/sshd_config

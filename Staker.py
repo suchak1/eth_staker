@@ -100,7 +100,8 @@ class Node:
             '--enable-builder',
             '--attest-timely',
             f'--wallet-dir={self.prysm_wallet_dir}',
-            f'--suggested-fee-recipient={ETH_ADDR}'
+            f'--suggested-fee-recipient={ETH_ADDR}',
+            f'--wallet-password-file={self.prysm_wallet_dir}/password.txt'
         ]
 
         if DEV:
@@ -171,10 +172,10 @@ class Node:
             #     'process': self.os_stats(),
             #     'prefix': '--- OS_STATS_ ---'
             # },
-            # {
-            #     'process': self.client_stats(),
-            #     'prefix': '____BEACONCHA.IN_'
-            # }
+            {
+                'process': self.client_stats(),
+                'prefix': '____BEACONCHA.IN_'
+            }
         ]
         for meta in processes:
             meta['stdout'] = iter(
