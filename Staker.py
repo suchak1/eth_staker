@@ -186,7 +186,7 @@ class Node:
 
     def signal_processes(self, sig, prefix, hard=True):
         if hard or not self.kill_in_progress:
-            print(f'{prefix} all processes... [{hard}]')
+            print(f'{prefix} all processes... [{"HARD" if hard else "SOFT"}]')
             for meta in self.processes:
                 try:
                     os.kill(meta['process'].pid, sig)
@@ -222,7 +222,7 @@ class Node:
                         backup_is_recent = False
                     if not backup_is_recent and not sent_interrupt:
                         print('Pausing node to initiate snapshot.')
-                        self.interrupt(False)
+                        self.interrupt(hard=False)
                         # since_signal = time()
                         sent_interrupt = True
                     for meta in self.processes:
@@ -230,9 +230,9 @@ class Node:
             except Exception as e:
                 logging.exception(e)
             sleep(KILL_TIME)
-            self.terminate(False)
+            self.terminate(hard=False)
             sleep(KILL_TIME)
-            self.kill(False)
+            self.kill(hard=False)
 
 
 node = Node()
