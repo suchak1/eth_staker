@@ -398,8 +398,8 @@ Resources:
 
             # Write wallet password to volume
             WALLET_DIR="/mnt/ebs/.eth2validators/prysm-wallet-v2"
-            mkdir -p "${WALLET_DIR}"
-            echo "${WalletPass}" > "${WALLET_DIR}/password.txt"
+            mkdir -p "${!WALLET_DIR}"
+            echo "${WalletPass}" > "${!WALLET_DIR}/password.txt"
 
             # Change default SSH port
             sed -i 's/#Port\s22/Port ${SSHPort}/' /etc/ssh/sshd_config
