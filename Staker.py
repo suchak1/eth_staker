@@ -184,7 +184,7 @@ class Node:
         return processes
 
     def signal_processes(self, sig, prefix, hard=True):
-        if hard and not self.kill_in_progress:
+        if hard or not self.kill_in_progress:
             print(f'{prefix} all processes... [{hard}]')
             for meta in self.processes:
                 try:
