@@ -159,10 +159,10 @@ class Node:
                 'process': self.validation(),
                 'prefix': '(( _VALIDATION ))'
             },
-            {
-                'process': self.mev(),
-                'prefix': "+++ MEV_BOOST +++"
-            },
+            # {
+            #     'process': self.mev(),
+            #     'prefix': "+++ MEV_BOOST +++"
+            # },
             # {
             #     'process': self.prometheus(),
             #     'prefix': '// _PROMETHEUS //'
@@ -171,10 +171,10 @@ class Node:
             #     'process': self.os_stats(),
             #     'prefix': '--- OS_STATS_ ---'
             # },
-            {
-                'process': self.client_stats(),
-                'prefix': '____BEACONCHA.IN_'
-            }
+            # {
+            #     'process': self.client_stats(),
+            #     'prefix': '____BEACONCHA.IN_'
+            # }
         ]
         for meta in processes:
             meta['stdout'] = iter(
