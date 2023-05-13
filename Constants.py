@@ -3,6 +3,7 @@ import os
 
 DEPLOY_ENV = os.environ['DEPLOY_ENV']
 BEACONCHAIN_KEY = os.environ['BEACONCHAIN_KEY']
+ETH_ADDR = os.environ['ETH_ADDR']
 DEV = DEPLOY_ENV.lower() == 'dev'
 KILL_TIME = 15
 

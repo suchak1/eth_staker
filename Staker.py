@@ -5,7 +5,7 @@ import logging
 from time import sleep
 import subprocess
 from glob import glob
-from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME
+from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR
 from Backup import Snapshot
 from MEV import Booster
 
@@ -19,10 +19,12 @@ class Node:
         prefix = f"{'/mnt/ebs' if AWS else home_dir}"
         geth_dir_base = f"/{'Library/Ethereum' if on_mac else '.ethereum'}"
         prysm_dir_base = f"/{'Library/Eth2' if on_mac else '.eth2'}"
+        prysm_wallet_postfix = f"{'V' if on_mac else 'v'}alidators/prysm-wallet-v2"
         geth_dir_postfix = '/goerli' if DEV else ''
 
         self.geth_data_dir = f"{prefix}{geth_dir_base}{geth_dir_postfix}"
         self.prysm_data_dir = f"{prefix}{prysm_dir_base}"
+        self.prysm_wallet_dir = f"{self.prysm_data_dir}{prysm_wallet_postfix}"
 
         ipc_postfix = '/geth.ipc'
         self.ipc_path = self.geth_data_dir + ipc_postfix
@@ -86,17 +88,27 @@ class Node:
         args += [
             f'--checkpoint-state={state_filename}',
             f'--checkpoint-block={block_filename}',
-            # '--suggested-fee-recipient=ETH_WALLET_ADDR_HERE!'
+            f'--suggested-fee-recipient={ETH_ADDR}'
         ]
         cmd = ['beacon-chain'] + args
         return self.run_cmd(cmd)
 
     def validation(self):
         args = [
+            '--accept-terms-of-use',
             # ENABLE THIS FOR MEV
-            # '--enable-builder'
+            '--enable-builder',
+            '--attest-timely',
+            f'--wallet-dir={self.prysm_wallet_dir}',
+            f'--suggested-fee-recipient={ETH_ADDR}'
         ]
-        cmd = ['ping', 'localhost'] + args
+
+        if DEV:
+            args.append("--prater")
+        else:
+            args.append('--mainnet')
+
+        cmd = ['validator'] + args
         return self.run_cmd(cmd)
 
     def mev(self):
@@ -147,10 +159,10 @@ class Node:
                 'process': self.consensus(),
                 'prefix': "[[[ CONSENSUS ]]]"
             },
-            # {
-            #     'process': self.validation(),
-            #     'prefix': '(( _VALIDATION ))'
-            # },
+            {
+                'process': self.validation(),
+                'prefix': '(( _VALIDATION ))'
+            },
             {
                 'process': self.mev(),
                 'prefix': "+++ MEV_BOOST +++"
@@ -250,7 +262,6 @@ node.run()
 # 1
 # 2
 # 4
-# - get goerli eth - https://testnetbridge.com/
 # - set suggested fee address - (use validator address?)
 # 5
 # - security best practices

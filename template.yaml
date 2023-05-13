@@ -36,6 +36,9 @@ Parameters:
   HostedZoneId:
     Type: "String"
     NoEcho: true
+  EthAddr:
+    Type: "String"
+    NoEcho: true
 
 Conditions:
   UseAMD64:
@@ -161,6 +164,8 @@ Resources:
               Value: true
             - Name: BEACONCHAIN_KEY
               Value: !Ref BeaconChainKey
+            - Name: ETH_ADDR
+              Value: !Ref EthAddr
           Essential: true
           MountPoints:
             - ContainerPath: /mnt/ebs

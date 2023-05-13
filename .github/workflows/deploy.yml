@@ -68,6 +68,7 @@ jobs:
           SSHPort: ${{ secrets.SSH_PORT }}
           BeaconChainKey: ${{ secrets.BEACONCHAIN_KEY }}
           HostedZoneId: ${{ secrets.HOSTED_ZONE_ID }}
+          EthAddr: ${{ secrets.ETH_ADDR }}
         run: |
           if [[ "${DEPLOY_ENV}" = "dev" ]]
           then
@@ -83,6 +84,7 @@ jobs:
           SSHPort=${SSHPort}
           BeaconChainKey=${BeaconChainKey}
           HostedZoneId=${HostedZoneId}
+          EthAddr=${EthAddr}
           " >> "${ParamsFile}"
 
       - name: Update ECS stack
