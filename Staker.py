@@ -44,7 +44,7 @@ class Node:
 
     def execution(self):
         args = [
-            '--http', '--http.api', 'eth,net,engine,admin', '--metrics',
+            '--http', '--http.api', 'eth,net,engine,admin', '--metrics', '--pprof'
             # try this
             # '--metrics.expensive',
         ]
@@ -255,26 +255,16 @@ signal.signal(signal.SIGTERM, stop_node)
 node.run()
 
 
-# TODO:
-# 1
-# 2
-# 4
-# - set suggested fee address - (use validator address?)
-# 5
-# - security best practices
-# https://docs.prylabs.network/docs/security-best-practices
-
-
-# https://someresat.medium.com/guide-to-staking-on-ethereum-ubuntu-goerli-prysm-4a640794e8b5
-# https://someresat.medium.com/guide-to-staking-on-ethereum-ubuntu-prysm-581fb1969460
-
 # Extra:
 # - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free, node exporter
 # - use spot instances
+#   - https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-launchtemplate-launchtemplatedata-instancemarketoptions-spotoptions.html
+#   - https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-autoscaling-autoscalinggroup-instancesdistribution.html
 #   - multiple zones
 #   - multiple instance types
 #   - enable capacity rebalancing
 #   - only use in dev until stable for prod
+#   - possibly t4g.xlarge?
 # turn off node for 10 min every 24 hrs?
 # - data integrity protection
 #   - shutdown / terminate instance if process fails and others continue => forces new vol from last snapshot
