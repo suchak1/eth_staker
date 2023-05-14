@@ -231,7 +231,6 @@ class Node:
         return any(self.poll_processes(processes))
 
     def run(self):
-
         while True:
             self.most_recent = self.snapshot.backup()
             self.relays = self.booster.get_relays()
@@ -247,7 +246,8 @@ class Node:
                     print('Pausing node to initiate snapshot.')
                     self.interrupt(hard=False)
                     sent_interrupt = True
-                self.stream_output(rstreams)
+                # Stream output
+                self.stream_logs(rstreams)
                 if self.any_process_is_dead(processes):
                     break
 
@@ -256,7 +256,7 @@ class Node:
             sleep(KILL_TIME)
             self.kill(hard=False)
             # Log rest of output
-            self.squeeze_output(processes)
+            self.squeeze_logs(processes)
 
 
 node = Node()
@@ -277,10 +277,6 @@ signal.signal(signal.SIGINT, stop_node)
 signal.signal(signal.SIGTERM, stop_node)
 
 node.run()
-
-# Find a way to print all logs
-# Execution logs are 30 min behind bc for loop is waiting for slowest process before publishing 1 round of logs.
-# Execution client has multiple logs in iteration backlog by that time
 
 # Extra:
 # - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free, node exporter
