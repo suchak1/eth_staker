@@ -229,10 +229,19 @@ class Node:
                         self.print_line(meta['prefix'], meta['stdout'])
             except Exception as e:
                 logging.exception(e)
+
             sleep(KILL_TIME)
             self.terminate(hard=False)
             sleep(KILL_TIME)
             self.kill(hard=False)
+            # Log rest of output
+            # move this to above kill line and below terminate sleep?
+            for process in self.processes:
+                stream = process['process'].stdout
+                for line in iter(stream.readline, b''):
+                    line = line.decode('UTF-8').strip()
+                    if line:
+                        print(f"{stream.prefix} {line}")
 
 
 node = Node()
