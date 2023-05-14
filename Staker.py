@@ -233,10 +233,8 @@ class Node:
                         sent_interrupt = True
                     for stream in rstreams:
                         self.print_line(stream.prefix, stream.readline())
-                    if any(process['process'].poll() is not None for process in processes):
+                    if any(meta['process'].poll() is not None for meta in processes):
                         break
-                    # for meta in processes:
-                    #     self.print_line(meta['prefix'], meta['stdout'])
             except Exception as e:
                 logging.exception(e)
 
@@ -245,9 +243,8 @@ class Node:
             sleep(KILL_TIME)
             self.kill(hard=False)
             # Log rest of output
-            # move this to above kill line and below terminate sleep?
-            for process in processes:
-                stream = process['process'].stdout
+            for meta in processes:
+                stream = meta['process'].stdout
                 for line in iter(stream.readline, b''):
                     self.print_line(stream.prefix, line)
 
