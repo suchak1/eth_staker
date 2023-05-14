@@ -211,6 +211,25 @@ class Node:
         if line:
             print(f"{prefix} {line}")
 
+    def stream_curr_out(self, rstreams):
+        for stream in rstreams:
+            self.print_line(stream.prefix, stream.readline())
+
+    def stream_final_out(self, processes):
+        for meta in processes:
+            stream = meta['process'].stdout
+            for line in iter(stream.readline, b''):
+                self.print_line(stream.prefix, line)
+
+    def poll_processes(self, processes):
+        return (meta['process'].poll() is not None for meta in processes)
+
+    def all_processes_are_dead(self, processes):
+        return all(self.poll_processes(processes))
+
+    def any_process_is_dead(self, processes):
+        return any(self.poll_processes(processes))
+
     def run(self):
 
         while True:
@@ -219,34 +238,25 @@ class Node:
             processes, streams = self.start()
             backup_is_recent = True
             sent_interrupt = False
-            # start = time()
-            # since_signal = time()
-            # try:
+
             while True:
                 rstreams, _, _ = select.select(streams, [], [])
-                if self.snapshot.is_older_than(self.most_recent, SNAPSHOT_DAYS):
-                    backup_is_recent = False
+                backup_is_recent = not self.snapshot.is_older_than(
+                    self.most_recent, SNAPSHOT_DAYS)
                 if not backup_is_recent and not sent_interrupt:
                     print('Pausing node to initiate snapshot.')
                     self.interrupt(hard=False)
-                    # since_signal = time()
                     sent_interrupt = True
-                for stream in rstreams:
-                    self.print_line(stream.prefix, stream.readline())
-                if any(meta['process'].poll() is not None for meta in processes):
+                self.stream_curr_out(rstreams)
+                if self.any_process_is_dead(processes):
                     break
-            # except Exception as e:
-            #     logging.exception(e)
 
             sleep(KILL_TIME)
             self.terminate(hard=False)
             sleep(KILL_TIME)
             self.kill(hard=False)
             # Log rest of output
-            for meta in processes:
-                stream = meta['process'].stdout
-                for line in iter(stream.readline, b''):
-                    self.print_line(stream.prefix, line)
+            self.stream_final_out(processes)
 
 
 node = Node()
