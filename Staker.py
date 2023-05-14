@@ -269,6 +269,7 @@ def stop_node(*_):
     node.terminate()
     sleep(KILL_TIME)
     node.kill()
+    node.squeeze_logs(node.processes)
     print('Node stopped.')
     exit(0)
 
