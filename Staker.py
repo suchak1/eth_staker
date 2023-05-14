@@ -177,9 +177,9 @@ class Node:
                 'prefix': '____BEACONCHA.IN_'
             }
         ]
+        # Label processes with log prefix
         for meta in processes:
-            meta['stdout'] = iter(
-                meta['process'].stdout.readline, b'')
+            meta['process'].stdout.prefix = meta['prefix']
 
         self.processes = processes
         return processes
@@ -254,6 +254,9 @@ signal.signal(signal.SIGTERM, stop_node)
 
 node.run()
 
+# Find a way to print all logs
+# Execution logs are 30 min behind bc for loop is waiting for slowest process before publishing 1 round of logs.
+# Execution client has multiple logs in iteration backlog by that time
 
 # Extra:
 # - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free, node exporter
