@@ -221,22 +221,22 @@ class Node:
             sent_interrupt = False
             # start = time()
             # since_signal = time()
-            try:
-                while True:
-                    rstreams, _, _ = select.select(streams, [], [])
-                    if self.snapshot.is_older_than(self.most_recent, SNAPSHOT_DAYS):
-                        backup_is_recent = False
-                    if not backup_is_recent and not sent_interrupt:
-                        print('Pausing node to initiate snapshot.')
-                        self.interrupt(hard=False)
-                        # since_signal = time()
-                        sent_interrupt = True
-                    for stream in rstreams:
-                        self.print_line(stream.prefix, stream.readline())
-                    if any(meta['process'].poll() is not None for meta in processes):
-                        break
-            except Exception as e:
-                logging.exception(e)
+            # try:
+            while True:
+                rstreams, _, _ = select.select(streams, [], [])
+                if self.snapshot.is_older_than(self.most_recent, SNAPSHOT_DAYS):
+                    backup_is_recent = False
+                if not backup_is_recent and not sent_interrupt:
+                    print('Pausing node to initiate snapshot.')
+                    self.interrupt(hard=False)
+                    # since_signal = time()
+                    sent_interrupt = True
+                for stream in rstreams:
+                    self.print_line(stream.prefix, stream.readline())
+                if any(meta['process'].poll() is not None for meta in processes):
+                    break
+            # except Exception as e:
+            #     logging.exception(e)
 
             sleep(KILL_TIME)
             self.terminate(hard=False)
