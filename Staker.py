@@ -211,11 +211,11 @@ class Node:
         if line:
             print(f"{prefix} {line}")
 
-    def stream_curr_out(self, rstreams):
+    def stream_output(self, rstreams):
         for stream in rstreams:
             self.print_line(stream.prefix, stream.readline())
 
-    def stream_final_out(self, processes):
+    def squeeze_output(self, processes):
         for meta in processes:
             stream = meta['process'].stdout
             for line in iter(stream.readline, b''):
@@ -247,7 +247,7 @@ class Node:
                     print('Pausing node to initiate snapshot.')
                     self.interrupt(hard=False)
                     sent_interrupt = True
-                self.stream_curr_out(rstreams)
+                self.stream_output(rstreams)
                 if self.any_process_is_dead(processes):
                     break
 
@@ -256,7 +256,7 @@ class Node:
             sleep(KILL_TIME)
             self.kill(hard=False)
             # Log rest of output
-            self.stream_final_out(processes)
+            self.squeeze_output(processes)
 
 
 node = Node()
