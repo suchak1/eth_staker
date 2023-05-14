@@ -230,8 +230,14 @@ class Node:
                         self.interrupt(hard=False)
                         # since_signal = time()
                         sent_interrupt = True
-                    for meta in self.processes:
-                        self.print_line(meta['prefix'], meta['stdout'])
+                    for stream in rstreams:
+                        line = stream.readline().decode('UTF-8').strip()
+                        if line:
+                            print(f"{stream.prefix} {line}")
+                    if any(process['process'].poll() is not None for process in processes):
+                        break
+                    # for meta in processes:
+                    #     self.print_line(meta['prefix'], meta['stdout'])
             except Exception as e:
                 logging.exception(e)
 
@@ -241,7 +247,7 @@ class Node:
             self.kill(hard=False)
             # Log rest of output
             # move this to above kill line and below terminate sleep?
-            for process in self.processes:
+            for process in processes:
                 stream = process['process'].stdout
                 for line in iter(stream.readline, b''):
                     line = line.decode('UTF-8').strip()
