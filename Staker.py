@@ -1,5 +1,6 @@
 import os
 import sys
+import select
 import signal
 import logging
 from time import sleep
@@ -177,12 +178,15 @@ class Node:
                 'prefix': '____BEACONCHA.IN_'
             }
         ]
+        streams = []
         # Label processes with log prefix
         for meta in processes:
             meta['process'].stdout.prefix = meta['prefix']
+            streams.append(meta['process'].stdout)
 
         self.processes = processes
-        return processes
+        self.streams = streams
+        return processes, streams
 
     def signal_processes(self, sig, prefix, hard=True):
         if hard or not self.kill_in_progress:
@@ -211,13 +215,14 @@ class Node:
         while True:
             self.most_recent = self.snapshot.backup()
             self.relays = self.booster.get_relays()
-            self.start()
+            processes, streams = self.start()
             backup_is_recent = True
             sent_interrupt = False
             # start = time()
             # since_signal = time()
             try:
                 while True:
+                    rstreams, _, _ = select.select(streams, [], [])
                     if self.snapshot.is_older_than(self.most_recent, SNAPSHOT_DAYS):
                         backup_is_recent = False
                     if not backup_is_recent and not sent_interrupt:
