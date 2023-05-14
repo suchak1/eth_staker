@@ -206,9 +206,10 @@ class Node:
     def kill(self, **kwargs):
         self.signal_processes(signal.SIGKILL, 'Killing', **kwargs)
 
-    def print_line(self, prefix, stdout):
-        line = stdout.__next__().decode('UTF-8').strip()
-        print(f"{prefix} {line}")
+    def print_line(self, prefix, line):
+        line = line.decode('UTF-8').strip()
+        if line:
+            print(f"{prefix} {line}")
 
     def run(self):
 
@@ -231,9 +232,7 @@ class Node:
                         # since_signal = time()
                         sent_interrupt = True
                     for stream in rstreams:
-                        line = stream.readline().decode('UTF-8').strip()
-                        if line:
-                            print(f"{stream.prefix} {line}")
+                        self.print_line(stream.prefix, stream.readline())
                     if any(process['process'].poll() is not None for process in processes):
                         break
                     # for meta in processes:
@@ -250,9 +249,7 @@ class Node:
             for process in processes:
                 stream = process['process'].stdout
                 for line in iter(stream.readline, b''):
-                    line = line.decode('UTF-8').strip()
-                    if line:
-                        print(f"{stream.prefix} {line}")
+                    self.print_line(stream.prefix, line)
 
 
 node = Node()
