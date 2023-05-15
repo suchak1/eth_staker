@@ -211,11 +211,11 @@ class Node:
         if line:
             print(f"{prefix} {line}")
 
-    def stream_output(self, rstreams):
+    def stream_logs(self, rstreams):
         for stream in rstreams:
             self.print_line(stream.prefix, stream.readline())
 
-    def squeeze_output(self, processes):
+    def squeeze_logs(self, processes):
         for meta in processes:
             stream = meta['process'].stdout
             for line in iter(stream.readline, b''):
