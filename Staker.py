@@ -173,10 +173,10 @@ class Node:
             #     'process': self.os_stats(),
             #     'prefix': '--- OS_STATS_ ---'
             # },
-            {
-                'process': self.client_stats(),
-                'prefix': '____BEACONCHA.IN_'
-            }
+            # {
+            #     'process': self.client_stats(),
+            #     'prefix': '____BEACONCHA.IN_'
+            # }
         ]
         streams = []
         # Label processes with log prefix
