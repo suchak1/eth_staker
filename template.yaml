@@ -313,13 +313,13 @@ Resources:
             DeviceName: /dev/sdx
             Ebs: 
               DeleteOnTermination: true
-              VolumeSize: 500
+              VolumeSize: !If [IsProd, 1500, 500]
               # can't use io2 because of cost
               VolumeType: gp3
               # Iops: 10000
               # 10 - 15k is laptop/desktop SSD throughput
               # Throughput: 1000
-              SnapshotId: !Sub '{{resolve:ssm:${DeployEnv}_staking_snapshot}}'
+              # SnapshotId: !Sub '{{resolve:ssm:${DeployEnv}_staking_snapshot}}'
                 # Condition: 
               # try defining cf param as ssm param val or 'default' / pseudo AWS::NoValue
               # https://www.jforte.me/posts/create-ebs-volume-snapshot-condtions-aws-cdk/
