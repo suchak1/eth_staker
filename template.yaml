@@ -1,0 +1,432 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  DeployEnv:
+    Type: "String"
+    AllowedValues:
+      - dev
+      - prod
+  Subnet:
+    Type: "String"
+    NoEcho: true
+  VPC:
+    Type: "String"
+    NoEcho: true
+  SSHPort:
+    Type: "Number"
+    NoEcho: true
+    Default: 22
+  DesiredCapacity:
+    Type: "Number"
+    Default: 1
+  Arch:
+    Type: "String"
+    Default: arm64
+  ECSOptimizedAMD64:
+    Description: AMI ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id
+  ECSOptimizedARM64:
+    Description: AMI ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ecs/optimized-ami/amazon-linux-2023/arm64/recommended/image_id
+  BeaconChainKey:
+    Type: "String"
+    NoEcho: true
+  HostedZoneId:
+    Type: "String"
+    NoEcho: true
+  EthAddr:
+    Type: "String"
+    NoEcho: true
+  WalletPass:
+    Type: "String"
+    NoEcho: true
+
+Conditions:
+  UseAMD64:
+    !Equals [!Ref Arch, amd64]
+  IsProd:
+    !Equals [!Ref DeployEnv, prod]
+
+Resources:
+  EIPDNSRecord:
+    DependsOn: ElasticIP
+    Type: AWS::Route53::RecordSet
+    Properties: 
+      # AliasTarget: 
+      #   AliasTarget
+      # CidrRoutingConfig: 
+      #   CidrRoutingConfig
+      # Comment: String
+      # Failover: String
+      # GeoLocation: 
+      #   GeoLocation
+      # HealthCheckId: String
+      HostedZoneId: !Ref HostedZoneId
+      # HostedZoneName: forcepu.sh
+      # MultiValueAnswer: Boolean
+      Name: !Join [ "", [!If [IsProd, "", "dev."], eth.forcepu.sh ] ]
+      # Region: !Ref AWS::Region
+      ResourceRecords: 
+        - !GetAtt ElasticIP.PublicIp
+      # SetIdentifier: String
+      TTL: 172800
+      Type: A
+      # Weight: Integer
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies: 
+        - PolicyName: AssociateEIP
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ec2:DescribeAddresses'
+                  - 'ec2:AllocateAddress'
+                  - 'ec2:DescribeInstances'
+                  - 'ec2:AssociateAddress'
+                Resource: '*'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+      RoleName: !Sub "${DeployEnv}StakingInstanceRole"
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties: 
+      Domain: vpc
+      # InstanceId: String
+      NetworkBorderGroup: !Ref AWS::Region
+      # PublicIpv4Pool: String
+      # TransferAddress: String
+  InstanceProfile:
+    DependsOn: InstanceRole
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      InstanceProfileName: !Sub "${DeployEnv}StakingInstanceProfile"
+      # Path: String
+      Roles: 
+        - !Sub "${DeployEnv}StakingInstanceRole"
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies: 
+        - PolicyName: BackupEBSVol
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ec2:CreateSnapshot'
+                  - 'ec2:DeleteSnapshot'
+                  - 'ec2:Describe*'
+                  - 'ec2:GetLaunchTemplateData'
+                Resource: '*'
+              - Effect: Allow
+                Action: 
+                  - 'ec2:CreateTags'
+                  # prob describe tags
+                  # maybe delete?
+                Resource: !Sub 'arn:aws:ec2:${AWS::Region}::snapshot/*'
+              - Effect: Allow
+                Action: 
+                  - 'ssm:PutParameter'
+                  - 'ssm:GetParameter'
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DeployEnv}_staking_snapshot'
+      RoleName: !Sub "${DeployEnv}StakingTaskRole"
+  TaskDefinition:
+    DependsOn: TaskRole
+    Type: AWS::ECS::TaskDefinition
+    Properties: 
+      ContainerDefinitions: 
+        - Name: !Sub "${DeployEnv}_staking_container"
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.us-east-1.amazonaws.com/${DeployEnv}_eth_staker:latest"
+          Environment:
+            - Name: AWS_DEFAULT_REGION
+              Value: !Ref AWS::Region
+            - Name: AWS
+              Value: true
+            - Name: BEACONCHAIN_KEY
+              Value: !Ref BeaconChainKey
+            - Name: ETH_ADDR
+              Value: !Ref EthAddr
+          Essential: true
+          MountPoints:
+            - ContainerPath: /mnt/ebs
+              ReadOnly: false
+              SourceVolume: EBSVol
+          Interactive: true
+          PseudoTerminal: true
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "/ecs/${DeployEnv}_eth_staker"
+              awslogs-region: !Ref AWS::Region
+      # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
+      # Cpu: 2048 # 2vCPUs
+      Memory: 14336 # 14GB / 16GB
+      ExecutionRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole"
+      Family: !Sub "${DeployEnv}_eth_staker"
+      NetworkMode: bridge
+      RequiresCompatibilities: 
+        - EC2
+      RuntimePlatform: 
+        CpuArchitecture: !If [UseAMD64, X86_64, ARM64]
+        OperatingSystemFamily: LINUX
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      Volumes: 
+        - Host: 
+            SourcePath: /mnt/ebs
+          Name: EBSVol
+  SecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: String
+        GroupName: !Sub "${DeployEnv}_staking_sg"
+        SecurityGroupEgress: 
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: -1
+        SecurityGroupIngress:
+          # SSH 
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: tcp
+            FromPort: !Ref SSHPort
+            ToPort: !Ref SSHPort
+          # Consensus
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: tcp
+            FromPort: 13000
+            ToPort: 13000
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: udp
+            FromPort: 12000
+            ToPort: 12000
+          # Execution
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: tcp
+            FromPort: 30303
+            ToPort: 30303
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: udp
+            FromPort: 30303
+            ToPort: 30303
+        VpcId: !Ref VPC
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub "${DeployEnv}-staking-cluster"
+      # No capacity providers necessary for EC2
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
+      # ECS Execute logging is defined in Config
+      # CONFIGURE LOGGING HERE
+  ECSService:
+      Type: AWS::ECS::Service
+      DependsOn: 
+        - ECSCluster
+        - TaskDefinition
+      Properties:
+        Cluster: !Sub "${DeployEnv}-staking-cluster"
+        DeploymentConfiguration: 
+          DeploymentCircuitBreaker:
+            Enable: false
+            Rollback: true
+          MaximumPercent: 200
+          MinimumHealthyPercent: 0
+        DeploymentController: 
+          Type: ECS
+        DesiredCount: !Ref DesiredCapacity
+        EnableECSManagedTags: true
+        # EnableExecuteCommand: true
+        # https://github.com/aws/aws-cli/issues/6242
+        LaunchType: EC2
+        PlacementStrategies: 
+          - Type: spread
+            Field: attribute:ecs.availability-zone
+          - Type: spread
+            Field: instanceId
+        SchedulingStrategy: REPLICA
+        ServiceName: !Sub "${DeployEnv}_staking_service"
+        TaskDefinition: !Sub "${DeployEnv}_eth_staker"
+  AutoScalingGroup:
+    DependsOn: 
+      - ECSCluster
+      - LaunchTemplate
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: !Sub "ECS_${DeployEnv}_staking_ASG"
+      AvailabilityZones: 
+        - !Sub "${AWS::Region}d"
+      CapacityRebalance: true
+      DesiredCapacity: !Sub "${DesiredCapacity}"
+      LaunchTemplate: 
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
+      MaxSize: 2
+      MetricsCollection: 
+        - Granularity: 1Minute
+      MinSize: 0
+      NewInstancesProtectedFromScaleIn: false
+      Tags: 
+        -
+          Key: Name
+          Value: !Sub "ECS Instance - ${AWS::StackName}"
+          PropagateAtLaunch: true
+        -
+          Key: Description
+          Value: "This instance is the part of the Auto Scaling group which was created through Cloudformation"
+          PropagateAtLaunch: true
+      TerminationPolicies: 
+        - Default
+      VPCZoneIdentifier: 
+        - !Ref Subnet
+  LaunchTemplate:
+    DependsOn: 
+      - SecurityGroup
+      - InstanceProfile
+      - ElasticIP
+    Type: AWS::EC2::LaunchTemplate
+    Properties: 
+      LaunchTemplateData: 
+        BlockDeviceMappings:
+          - 
+            DeviceName: /dev/sdx
+            Ebs: 
+              DeleteOnTermination: true
+              VolumeSize: 500
+              # can't use io2 because of cost
+              VolumeType: gp3
+              # Iops: 10000
+              # 10 - 15k is laptop/desktop SSD throughput
+              # Throughput: 1000
+              SnapshotId: !Sub '{{resolve:ssm:${DeployEnv}_staking_snapshot}}'
+                # Condition: 
+              # try defining cf param as ssm param val or 'default' / pseudo AWS::NoValue
+              # https://www.jforte.me/posts/create-ebs-volume-snapshot-condtions-aws-cdk/
+        DisableApiStop: false
+        DisableApiTermination: false
+        EbsOptimized: true
+        IamInstanceProfile: 
+          Name: !Sub "${DeployEnv}StakingInstanceProfile"
+        # This is Amazon Linux 2023 AMI for amd64
+        ImageId: !If [UseAMD64, !Ref ECSOptimizedAMD64, !Ref ECSOptimizedARM64]
+        InstanceInitiatedShutdownBehavior: terminate
+        # for spot instances
+        # InstanceMarketOptions: 
+        #   InstanceMarketOptions
+        # # use this to specify reqs instead of instance type
+        # InstanceRequirements: 
+        #   InstanceRequirements
+        # Try m6g.large (7.5% savings) or m7g.large (2% savings) in dev 
+        #   - jk crashes bc of cpu and mem usage on t3.large
+        # and m6g.xlarge or m7g.xlarge in prod
+        InstanceType: !If [UseAMD64, t3.xlarge, m6g.xlarge]
+        KeyName: !Sub "${DeployEnv}_staking_keys"
+        MaintenanceOptions: 
+          AutoRecovery: default
+        Monitoring: 
+          Enabled: true
+        SecurityGroupIds: 
+          - !GetAtt SecurityGroup.GroupId
+        TagSpecifications: 
+          - ResourceType: volume
+            Tags:
+              -
+                Key: Name
+                Value: !Sub "ECS Instance - ${AWS::StackName}"
+              -
+                Key: Description
+                Value: "This volume is the part of the Launch Template which was created through Cloudformation"
+          - ResourceType: instance
+            Tags:
+              -
+                Key: Name
+                Value: !Sub "ECS Instance - ${AWS::StackName}"
+              -
+                Key: Description
+                Value: "This instance is the part of the Launch Template which was created through Cloudformation"
+        UserData:
+          "Fn::Base64": !Sub |
+            #!/bin/bash
+
+            # Start ECS agent and register task
+            echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+            echo ECS_ENABLE_CONTAINER_METADATA=true >> /etc/ecs/ecs.config
+            yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_${Arch}/amazon-ssm-agent.rpm
+            yum install -y https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/${Arch}/latest/amazon-cloudwatch-agent.rpm
+            yum install -y aws-cfn-bootstrap hibagent 
+            /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource LaunchTemplate
+            /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource AutoScalingGroup
+            /usr/bin/enable-ec2-spot-hibernation
+
+            # Mount EBS volume
+            mkdir -p /mnt/ebs
+            mkfs -t xfs /dev/sdx
+            if [ $? -eq 0 ]; then
+                echo "New volume initialized."
+            else
+                echo "Snapshot EBS volume loaded."
+            fi
+            mount -o nouuid /dev/sdx /mnt/ebs
+            
+            # Write volume id to volume
+            awk -F' '  '{print $NF}' <<< $(/sbin/ebsnvme-id /dev/sdx -v) > /mnt/ebs/VOLUME_ID
+            
+            # Write instance id to volume
+            INSTANCE_ID=$(awk -F' '  '{print $NF}' <<< $(ec2-metadata --instance-id))
+            echo "${!INSTANCE_ID}" > /mnt/ebs/INSTANCE_ID
+
+            # Write wallet password to volume
+            WALLET_DIR="/mnt/ebs/.eth2validators/prysm-wallet-v2"
+            mkdir -p "${!WALLET_DIR}"
+            echo "${WalletPass}" > "${!WALLET_DIR}/password.txt"
+
+            # Change default SSH port
+            sed -i 's/#Port\s22/Port ${SSHPort}/' /etc/ssh/sshd_config
+            service sshd restart
+
+            # Associate Elastic IP
+            MAXWAIT=3
+            ALLOC_ID="${ElasticIP.AllocationId}"
+            AWS_DEFAULT_REGION="${AWS::Region}"
+
+            # Make sure the EIP is free
+            echo "Checking if EIP with ALLOC_ID[$ALLOC_ID] is free...."
+            ISFREE=$(aws ec2 describe-addresses --allocation-ids $ALLOC_ID --query Addresses[].InstanceId --output text)
+            STARTWAIT=$(date +%s)
+            while [ ! -z "$ISFREE" ]; do
+                if [ "$(($(date +%s) - $STARTWAIT))" -gt $MAXWAIT ]; then
+                    echo "WARNING: We waited 30 seconds, we're forcing it now."
+                    ISFREE=""
+                else
+                    echo "Waiting for EIP with ALLOC_ID[$ALLOC_ID] to become free...."
+                    sleep 3
+                    ISFREE=$(aws ec2 describe-addresses --allocation-ids $ALLOC_ID --query Addresses[].InstanceId --output text)
+                fi
+            done
+
+            # Now we can associate the address
+            echo Running: aws ec2 associate-address --instance-id $INSTANCE_ID --allocation-id $ALLOC_ID --allow-reassociation
+            aws ec2 associate-address --instance-id $INSTANCE_ID --allocation-id $ALLOC_ID --allow-reassociation
+
+      LaunchTemplateName: !Sub "${DeployEnv}_launch_template"
