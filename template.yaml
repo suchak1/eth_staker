@@ -181,6 +181,7 @@ Resources:
             Options:
               awslogs-group: !Sub "/ecs/${DeployEnv}_eth_staker"
               awslogs-region: !Ref AWS::Region
+              awslogs-create-group: true
       # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
       # Cpu: 2048 # 2vCPUs
       Memory: 14336 # 14GB / 16GB
