@@ -101,6 +101,30 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
       RoleName: !Sub "${DeployEnv}StakingInstanceRole"
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies: 
+        - PolicyName: WriteLogs
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'logs:CreateLogGroup'
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/ecs/${DeployEnv}_eth_staker:*"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      RoleName: !Sub "${DeployEnv}StakingExecutionRole"
   ElasticIP:
     Type: AWS::EC2::EIP
     Properties: 
@@ -185,7 +209,7 @@ Resources:
       # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
       # Cpu: 2048 # 2vCPUs
       Memory: 14336 # 14GB / 16GB
-      ExecutionRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole"
+      ExecutionRoleArn: !GetAtt ExecutionRole.Arn
       Family: !Sub "${DeployEnv}_eth_staker"
       NetworkMode: bridge
       RequiresCompatibilities: 
