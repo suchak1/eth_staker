@@ -366,6 +366,16 @@ Resources:
         #   - jk crashes bc of cpu and mem usage on t3.large
         # and m6g.xlarge or m7g.xlarge in prod
         InstanceType: !If [UseAMD64, t3.xlarge, m6g.xlarge]
+        !If [IsProd, !If [UseAMD64, t3.2xlarge, m6g.2xlarge], !If [UseAMD64, t3.xlarge, m6g.xlarge]]
+        !If [UseAMD64, !If [IsProd, t3.2xlarge, t3.xlarge], !If [IsProd, m6g.2xlarge, m6g.xlarge]]
+        !Join [ "", [!If [UseAMD64, "t3", "m6g"], ".",  !If [IsProd, "2x", "x"], "large"] ]
+        !Join [ "", [!If [IsProd, "", "dev."], eth.forcepu.sh ] ]
+        # figure out instance type here
+        # stop prod task
+        # create prod snapshot with tag
+        # update prod ssm param
+        # terminate instance from asg
+        # deploy changes from here
         KeyName: !Sub "${DeployEnv}_staking_keys"
         MaintenanceOptions: 
           AutoRecovery: default
