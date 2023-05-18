@@ -208,7 +208,8 @@ Resources:
               awslogs-create-group: true
       # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
       # Cpu: 2048 # 2vCPUs
-      Memory: 14336 # 14GB / 16GB
+      # 30/32 GB for prod, 14/16 GB for dev
+      Memory: !If [IsProd, 30720, 14336]
       ExecutionRoleArn: !GetAtt ExecutionRole.Arn
       Family: !Sub "${DeployEnv}_eth_staker"
       NetworkMode: bridge
@@ -366,11 +367,6 @@ Resources:
         #   - jk crashes bc of cpu and mem usage on t3.large
         # and m6g.xlarge or m7g.xlarge in prod
         InstanceType: !Join [ "", [!If [UseAMD64, "t3", "m6g"], ".",  !If [IsProd, "2x", "x"], "large"] ]
-        # stop prod task
-        # create prod snapshot with tag
-        # update prod ssm param
-        # terminate instance from asg
-        # deploy changes from here
         KeyName: !Sub "${DeployEnv}_staking_keys"
         MaintenanceOptions: 
           AutoRecovery: default
