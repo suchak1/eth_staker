@@ -208,7 +208,8 @@ Resources:
               awslogs-create-group: true
       # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
       # Cpu: 2048 # 2vCPUs
-      Memory: 14336 # 14GB / 16GB
+      # 30/32 GB for prod, 14/16 GB for dev
+      Memory: !If [IsProd, 30720, 14336]
       ExecutionRoleArn: !GetAtt ExecutionRole.Arn
       Family: !Sub "${DeployEnv}_eth_staker"
       NetworkMode: bridge
@@ -344,7 +345,7 @@ Resources:
               # Iops: 10000
               # 10 - 15k is laptop/desktop SSD throughput
               # Throughput: 1000
-              # SnapshotId: !Sub '{{resolve:ssm:${DeployEnv}_staking_snapshot}}'
+              SnapshotId: !Sub '{{resolve:ssm:${DeployEnv}_staking_snapshot}}'
                 # Condition: 
               # try defining cf param as ssm param val or 'default' / pseudo AWS::NoValue
               # https://www.jforte.me/posts/create-ebs-volume-snapshot-condtions-aws-cdk/
@@ -365,7 +366,7 @@ Resources:
         # Try m6g.large (7.5% savings) or m7g.large (2% savings) in dev 
         #   - jk crashes bc of cpu and mem usage on t3.large
         # and m6g.xlarge or m7g.xlarge in prod
-        InstanceType: !If [UseAMD64, t3.xlarge, m6g.xlarge]
+        InstanceType: !Join [ "", [!If [UseAMD64, "t3", "m6g"], ".",  !If [IsProd, "2x", "x"], "large"] ]
         KeyName: !Sub "${DeployEnv}_staking_keys"
         MaintenanceOptions: 
           AutoRecovery: default
