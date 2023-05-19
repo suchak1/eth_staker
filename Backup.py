@@ -38,15 +38,7 @@ class Snapshot:
                     }
                 ]
             )
-            self.ssm.put_parameter(
-                Name=self.tag,
-                Value=snapshot['SnapshotId'],
-                Type='String',
-                Overwrite=True,
-                Tier='Standard',
-                DataType='text'
-            )
-
+            self.put_param(snapshot['SnapshotId'])
             return snapshot
 
     def get_prefix_id(self, prefix):
@@ -68,26 +60,12 @@ class Snapshot:
         return snapshots
 
     def get_exceptions(self):
-        exceptions = set()
-        try:
-            # Add existing snapshot id from ssm
-            exceptions.add(self.ssm.get_parameter(
-                Name=self.tag)['Parameter']['Value'])
-        except Exception as e:
-            logging.exception(e)
-
-        try:
-            # Add snapshot id from current instance's launch template
-            if AWS:
-                launch_template = self.ec2.get_launch_template_data(
-                    InstanceId=self.instance_id)
-                for device in launch_template['LaunchTemplateData']['BlockDeviceMappings']:
-                    if device['DeviceName'] == '/dev/sdx':
-                        exceptions.add(device['Ebs']['SnapshotId'])
-                        break
-        except Exception as e:
-            logging.exception(e)
-
+        exceptions = set([
+            exception for exception in [
+                         self.get_param(),
+                         self.get_curr_snapshot_id()
+                         ] if exception
+        ])
         return exceptions
 
     def get_snapshot_time(self, snapshot):
@@ -116,6 +94,66 @@ class Snapshot:
             self.ec2.delete_snapshot(
                 SnapshotId=snapshot['SnapshotId'],
             )
+
+    def put_param(self, snapshot_id):
+        self.ssm.put_parameter(
+            Name=self.tag,
+            Value=snapshot_id,
+            Type='String',
+            Overwrite=True,
+            Tier='Standard',
+            DataType='text'
+        )
+
+    def get_param(self):
+        val = None
+        try:
+            # Add existing snapshot id from ssm
+            val = self.ssm.get_parameter(
+                Name=self.tag)['Parameter']['Value']
+        except Exception as e:
+            logging.exception(e)
+        return val
+
+    def get_curr_snapshot_id(self):
+        val = None
+        try:
+            # Add snapshot id from current instance's launch template
+            if AWS:
+                launch_template = self.ec2.get_launch_template_data(
+                    InstanceId=self.instance_id)
+                for device in launch_template['LaunchTemplateData']['BlockDeviceMappings']:
+                    if device['DeviceName'] == '/dev/sdx':
+                        val = device['Ebs']['SnapshotId']
+                        break
+        except Exception as e:
+            logging.exception(e)
+
+        return val
+
+    def update(self):
+        curr_snapshots = self.get_snapshots()
+        most_recent = self.find_most_recent(curr_snapshots)
+        recent_snapshot_id = most_recent['SnapshotId']
+        self.put_param(recent_snapshot_id)
+        template_name = f'{DEPLOY_ENV}_launch_template'
+        launch_template = self.ec2.create_launch_template_version(
+            LaunchTemplateName=template_name, Versions=['$Latest'])['LaunchTemplateVersions'][0]
+        for device in launch_template['LaunchTemplateData']['BlockDeviceMappings']:
+            if device['DeviceName'] == '/dev/sdx':
+                vol = device
+                curr_snapshot_id = device['Ebs']['SnapshotId']
+                break
+        template_version = str(launch_template['VersionNumber'])
+        if curr_snapshot_id != recent_snapshot_id:
+            vol['Ebs']['SnapshotId'] = recent_snapshot_id
+            template_version = str(self.self.ec2.create_launch_template_version(
+                LaunchTemplateName=template_name, SourceVersion=template_version, LaunchTemplateData={'BlockDeviceMappings': [vol]})['LaunchTemplateVersions']['VersionNumber'])
+
+        # TODO:
+        # See if ASG is using latest template version
+        # If so, return false
+        # If not, then update ASG to use latest template version and return true
 
     def backup(self):
         curr_snapshots = self.get_snapshots()

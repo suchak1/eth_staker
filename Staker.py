@@ -231,8 +231,7 @@ class Node:
         return any(self.poll_processes(processes))
 
     def run(self):
-        # get most recent snapshot w tags
-        # update ssm if needed
+        self.snapshot.update()
         # update launch template if needed and get version
         # check asg and if not using newest launch template, then update and terminate instance
         while True:
