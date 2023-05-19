@@ -336,11 +336,7 @@ Resources:
             - !Ref AWS::NoValue
             - MarketType: spot
               SpotOptions:
-                BlockDurationMinutes: Integer
-                InstanceInterruptionBehavior: String
-                MaxPrice: String
-                SpotInstanceType: String
-                ValidUntil: String
+                SpotInstanceType: one-time
         BlockDeviceMappings:
           - 
             DeviceName: /dev/sdx
