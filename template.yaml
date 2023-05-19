@@ -329,7 +329,18 @@ Resources:
       - ElasticIP
     Type: AWS::EC2::LaunchTemplate
     Properties: 
-      LaunchTemplateData: 
+      LaunchTemplateData:
+        InstanceMarketOptions:
+          !If 
+            - IsProd
+            - !Ref AWS::NoValue
+            - MarketType: spot
+              SpotOptions:
+                BlockDurationMinutes: Integer
+                InstanceInterruptionBehavior: String
+                MaxPrice: String
+                SpotInstanceType: String
+                ValidUntil: String
         BlockDeviceMappings:
           - 
             DeviceName: /dev/sdx
