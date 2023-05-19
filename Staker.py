@@ -270,9 +270,8 @@ class Node:
         self.kill()
         self.squeeze_logs(self.processes)
         print('Node stopped')
-        # THIS MAY NOT BE NECESSARY IF snapshot was taken recently - 5 min buffer
         # if instance is draining,
-        # then take snapshot
+        # then take snapshot # THIS MAY NOT BE NECESSARY IF snapshot was taken recently - 5 min buffer
         # + update ssm
         # + update launch template
         # + update asg to use latest launch template
