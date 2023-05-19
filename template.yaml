@@ -264,8 +264,6 @@ Resources:
       ClusterSettings:
         - Name: containerInsights
           Value: enabled
-      # ECS Execute logging is defined in Config
-      # CONFIGURE LOGGING HERE
   ECSService:
       Type: AWS::ECS::Service
       DependsOn: 
@@ -363,9 +361,6 @@ Resources:
         # # use this to specify reqs instead of instance type
         # InstanceRequirements: 
         #   InstanceRequirements
-        # Try m6g.large (7.5% savings) or m7g.large (2% savings) in dev 
-        #   - jk crashes bc of cpu and mem usage on t3.large
-        # and m6g.xlarge or m7g.xlarge in prod
         InstanceType: !Join [ "", [!If [UseAMD64, "t3", "m6g"], ".",  !If [IsProd, "2x", "x"], "large"] ]
         KeyName: !Sub "${DeployEnv}_staking_keys"
         MaintenanceOptions: 
