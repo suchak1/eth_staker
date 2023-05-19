@@ -16,7 +16,7 @@ def get_env_bool(var_name):
 AWS = get_env_bool('AWS')
 
 MAX_SNAPSHOTS = 3
-SNAPSHOT_DAYS = 30
+SNAPSHOT_DAYS = 1
 MAX_SNAPSHOT_DAYS = MAX_SNAPSHOTS * SNAPSHOT_DAYS
 
 

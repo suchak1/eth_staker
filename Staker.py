@@ -231,6 +231,10 @@ class Node:
         return any(self.poll_processes(processes))
 
     def run(self):
+        # get most recent snapshot w tags
+        # update ssm if needed
+        # update launch template if needed and get version
+        # check asg and if not using newest launch template, then update and terminate instance
         while True:
             self.most_recent = self.snapshot.backup()
             self.relays = self.booster.get_relays()
@@ -258,24 +262,33 @@ class Node:
             # Log rest of output
             self.squeeze_logs(processes)
 
+    def stop(self):
+        self.kill_in_progress = True
+        self.interrupt()
+        sleep(KILL_TIME)
+        self.terminate()
+        sleep(KILL_TIME)
+        self.kill()
+        self.squeeze_logs(self.processes)
+        print('Node stopped')
+        # THIS MAY NOT BE NECESSARY IF snapshot was taken recently - 5 min buffer
+        # if instance is draining,
+        # then take snapshot
+        # + update ssm
+        # + update launch template
+        # + update asg to use latest launch template
+        exit(0)
+
 
 node = Node()
 
 
-def stop_node(*_):
-    node.kill_in_progress = True
-    node.interrupt()
-    sleep(KILL_TIME)
-    node.terminate()
-    sleep(KILL_TIME)
-    node.kill()
-    node.squeeze_logs(node.processes)
-    print('Node stopped.')
-    exit(0)
+def handle_signal(*_):
+    node.stop()
 
 
-signal.signal(signal.SIGINT, stop_node)
-signal.signal(signal.SIGTERM, stop_node)
+signal.signal(signal.SIGINT, handle_signal)
+signal.signal(signal.SIGTERM, handle_signal)
 
 node.run()
 
@@ -288,7 +301,6 @@ node.run()
 #   - multiple instance types
 #   - enable capacity rebalancing
 #   - only use in dev until stable for prod
-#   - possibly t4g.xlarge?
 # turn off node for 10 min every 24 hrs?
 # - data integrity protection
 #   - shutdown / terminate instance if process fails and others continue => forces new vol from last snapshot
