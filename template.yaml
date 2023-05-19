@@ -330,13 +330,7 @@ Resources:
     Type: AWS::EC2::LaunchTemplate
     Properties: 
       LaunchTemplateData:
-        InstanceMarketOptions:
-          !If 
-            - IsProd
-            - !Ref AWS::NoValue
-            - MarketType: spot
-              SpotOptions:
-                SpotInstanceType: one-time
+        
         BlockDeviceMappings:
           - 
             DeviceName: /dev/sdx
@@ -360,9 +354,13 @@ Resources:
         # This is Amazon Linux 2023 AMI for amd64
         ImageId: !If [UseAMD64, !Ref ECSOptimizedAMD64, !Ref ECSOptimizedARM64]
         InstanceInitiatedShutdownBehavior: terminate
-        # for spot instances
-        # InstanceMarketOptions: 
-        #   InstanceMarketOptions
+        InstanceMarketOptions:
+          !If 
+            - IsProd
+            - !Ref AWS::NoValue
+            - MarketType: spot
+              SpotOptions:
+                SpotInstanceType: one-time
         # # use this to specify reqs instead of instance type
         # InstanceRequirements: 
         #   InstanceRequirements
@@ -396,8 +394,12 @@ Resources:
             #!/bin/bash
 
             # Start ECS agent and register task
-            echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
-            echo ECS_ENABLE_CONTAINER_METADATA=true >> /etc/ecs/ecs.config
+            cat <<'EOF' >> /etc/ecs/ecs.config
+            ECS_CLUSTER=${ECSCluster}
+            ECS_ENABLE_CONTAINER_METADATA=true
+            ECS_ENABLE_SPOT_INSTANCE_DRAINING=true
+            ECS_CONTAINER_STOP_TIMEOUT=120s
+            EOF
             yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_${Arch}/amazon-ssm-agent.rpm
             yum install -y https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/${Arch}/latest/amazon-cloudwatch-agent.rpm
             yum install -y aws-cfn-bootstrap hibagent 
