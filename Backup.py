@@ -9,6 +9,8 @@ class Snapshot:
         self.tag = f'{DEPLOY_ENV}_staking_snapshot'
         self.ec2 = boto3.client('ec2')
         self.ssm = boto3.client('ssm')
+        self.auto = boto3.client('autoscaling')
+        self.ecs = boto3.client('ecs')
         if AWS:
             self.volume_id = self.get_prefix_id('VOLUME')
             self.instance_id = self.get_prefix_id('INSTANCE')
@@ -137,7 +139,7 @@ class Snapshot:
         recent_snapshot_id = most_recent['SnapshotId']
         self.put_param(recent_snapshot_id)
         template_name = f'{DEPLOY_ENV}_launch_template'
-        launch_template = self.ec2.create_launch_template_version(
+        launch_template = self.ec2.describe_launch_template_versions(
             LaunchTemplateName=template_name, Versions=['$Latest'])['LaunchTemplateVersions'][0]
         for device in launch_template['LaunchTemplateData']['BlockDeviceMappings']:
             if device['DeviceName'] == '/dev/sdx':
@@ -149,11 +151,42 @@ class Snapshot:
             vol['Ebs']['SnapshotId'] = recent_snapshot_id
             template_version = str(self.self.ec2.create_launch_template_version(
                 LaunchTemplateName=template_name, SourceVersion=template_version, LaunchTemplateData={'BlockDeviceMappings': [vol]})['LaunchTemplateVersions']['VersionNumber'])
+        asg_name = f'ECS_${DEPLOY_ENV}_staking_ASG'
+        asg = self.auto.describe_auto_scaling_groups(
+            AutoScalingGroupNames=[asg_name])['AutoScalingGroups'][0]
+        update_asg = asg['LaunchTemplate']['Version'] != template_version
+        instance = [instance for instance in asg['Instances']
+                    if instance['InstanceId'] == self.instance_id][0]
+        refresh_instance = instance['LaunchTemplate']['Version'] != template_version
+        if update_asg:
+            self.auto.update_auto_scaling_group(
+                AutoScalingGroupName=asg_name,
+                LaunchTemplate={
+                    'LaunchTemplateName': template_name,
+                    'Version': '$Latest'
+                }
+            )
+            # TODO: update asg
+            pass
+        if update_asg or refresh_instance:
+            # need to terminate instance
+            return True
 
-        # TODO:
+        return False
         # See if ASG is using latest template version
         # If so, return false
         # If not, then update ASG to use latest template version and return true
+
+    def instance_is_draining(self):
+        cluster_name = f'{DEPLOY_ENV}-staking-cluster'
+        container_instance_arns = self.ecs.list_container_instances(
+            cluster=cluster_name)['containerInstanceArns']
+        container_instances = self.ecs.describe_container_instances(
+            cluster=cluster_name, containerInstances=container_instance_arns)['containerInstances']
+        container_instance = [
+            instance for instance in container_instances if instance['ec2InstanceId'] == self.instance_id][0]
+        status = container_instance['status']
+        return status == 'DRAINING'
 
     def backup(self):
         curr_snapshots = self.get_snapshots()
@@ -161,3 +194,7 @@ class Snapshot:
         snapshot = self.create(curr_snapshots)
         self.purge(curr_snapshots, exceptions)
         return snapshot or self.find_most_recent(curr_snapshots)
+
+    def terminate(self):
+        # TODO:
+        pass

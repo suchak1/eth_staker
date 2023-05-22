@@ -231,9 +231,12 @@ class Node:
         return any(self.poll_processes(processes))
 
     def run(self):
-        self.snapshot.update()
+        terminate = self.snapshot.update()
+        if terminate:
+            self.snapshot.terminate()
         # update launch template if needed and get version
         # check asg and if not using newest launch template, then update and terminate instance
+        # sleep / while loop while waiting for instance termination
         while True:
             self.most_recent = self.snapshot.backup()
             self.relays = self.booster.get_relays()
@@ -270,11 +273,9 @@ class Node:
         self.kill()
         self.squeeze_logs(self.processes)
         print('Node stopped')
-        # if instance is draining,
-        # then take snapshot # THIS MAY NOT BE NECESSARY IF snapshot was taken recently - 5 min buffer
-        # + update ssm
-        # + update launch template
-        # + update asg to use latest launch template
+        if self.snapshot.instance_is_draining():
+            # take snapshot? can cause infinite loop? as termination at start can trigger this?
+            self.snapshot.update()
         exit(0)
 
 
