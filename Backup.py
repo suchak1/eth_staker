@@ -141,7 +141,8 @@ class Snapshot:
         curr_snapshots = self.get_snapshots()
         most_recent = self.find_most_recent(curr_snapshots)
         recent_snapshot_id = most_recent['SnapshotId']
-        self.put_param(recent_snapshot_id)
+        if self.get_param() != recent_snapshot_id:
+            self.put_param(recent_snapshot_id)
         template_name = f'{DEPLOY_ENV}_launch_template'
         launch_template = self.ec2.describe_launch_template_versions(
             LaunchTemplateName=template_name, Versions=['$Latest'])['LaunchTemplateVersions'][0]
