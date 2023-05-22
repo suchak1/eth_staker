@@ -32,6 +32,7 @@ class Node:
         self.snapshot = Snapshot()
         self.booster = Booster()
         self.kill_in_progress = False
+        self.terminating = False
 
     def run_cmd(self, cmd):
         print(f"Running cmd: {' '.join(cmd)}")
@@ -234,7 +235,7 @@ class Node:
         terminate = self.snapshot.update()
         if terminate:
             self.terminating = True
-            self.snapshot.terminate()
+            # self.snapshot.terminate()
             while self.terminating:
                 pass
         while True:

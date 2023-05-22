@@ -164,10 +164,13 @@ class Snapshot:
             curr_version == latest_version or curr_version == '$Latest'
         update_asg = not is_latest_version(
             asg['LaunchTemplate']['Version'],  template_version)
+        print('asg', asg['LaunchTemplate']['Version'], template_version)
         instance = [instance for instance in asg['Instances']
                     if instance['InstanceId'] == self.instance_id][0]
         refresh_instance = not is_latest_version(
             instance['LaunchTemplate']['Version'],  template_version)
+        print('instance', instance['LaunchTemplate']
+              ['Version'], template_version)
         if update_asg:
             self.auto.update_auto_scaling_group(
                 AutoScalingGroupName=asg_name,
@@ -176,6 +179,8 @@ class Snapshot:
                     'Version': '$Latest'
                 }
             )
+        print('update_asg', update_asg)
+        print('refresh_instance', refresh_instance)
         if update_asg or refresh_instance:
             return True
 
