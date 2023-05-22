@@ -169,7 +169,8 @@ Resources:
                   - 'ecs:DescribeContainerInstances'
                   - 'ec2:CreateLaunchTemplateVersion'
                   - 'autoscaling:DescribeAutoScalingGroups'
-                  - 'iam:PassRole'
+                  - 'ec2:RunInstances'
+                  # - 'iam:PassRole'
                 Resource: '*'
               - Effect: Allow
                 Action:
