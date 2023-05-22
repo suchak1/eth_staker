@@ -155,7 +155,7 @@ class Snapshot:
         if curr_snapshot_id != recent_snapshot_id:
             vol['Ebs']['SnapshotId'] = recent_snapshot_id
             template_version = str(self.ec2.create_launch_template_version(
-                LaunchTemplateName=template_name, SourceVersion=template_version, LaunchTemplateData={'BlockDeviceMappings': [vol]})['LaunchTemplateVersions']['VersionNumber'])
+                LaunchTemplateName=template_name, SourceVersion=template_version, LaunchTemplateData={'BlockDeviceMappings': [vol]})['LaunchTemplateVersion']['VersionNumber'])
         asg_name = f'ECS_{DEPLOY_ENV}_staking_ASG'
         asg = self.auto.describe_auto_scaling_groups(
             AutoScalingGroupNames=[asg_name])['AutoScalingGroups'][0]

@@ -290,6 +290,12 @@ def handle_signal(*_):
 
 signal.signal(signal.SIGINT, handle_signal)
 signal.signal(signal.SIGTERM, handle_signal)
+# add wait handler that handles wait signal by setting self.continue = True in init and replace both while True:
+# with while self.continue
+# wait handler will self.interrupt() and then self.continue to false
+
+# add waiting for snapshot to be available before restarting processes?
+#
 
 node.run()
 
@@ -300,7 +306,6 @@ node.run()
 #   - https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-autoscaling-autoscalinggroup-instancesdistribution.html
 #   - multiple zones
 #   - multiple instance types
-#   - enable capacity rebalancing
 #   - only use in dev until stable for prod
 # turn off node for 10 min every 24 hrs?
 # - data integrity protection
