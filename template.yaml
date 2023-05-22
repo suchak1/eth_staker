@@ -319,6 +319,8 @@ Resources:
         LaunchTemplateId: !Ref LaunchTemplate
         Version: !GetAtt LaunchTemplate.LatestVersionNumber
       MaxSize: 2
+      MetricsCollection: 
+        - Granularity: 1Minute
       MinSize: 0
       NewInstancesProtectedFromScaleIn: false
       Tags: 
