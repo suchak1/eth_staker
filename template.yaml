@@ -168,11 +168,11 @@ Resources:
                   - 'ecs:ListContainerInstances'
                   - 'ecs:DescribeContainerInstances'
                   - 'ec2:CreateLaunchTemplateVersion'
+                  - 'autoscaling:DescribeAutoScalingGroups'
                 Resource: '*'
               - Effect: Allow
                 Action:
                   - 'autoscaling:UpdateAutoScalingGroup'
-                  - 'autoscaling:DescribeAutoScalingGroups'
                 Resource: !Sub 'arn:aws:autoscaling:${AWS::Region}:${AWS::AccountId}:autoScalingGroup:*:autoScalingGroupName/ECS_${DeployEnv}_staking_ASG'
               - Effect: Allow
                 Action: 
