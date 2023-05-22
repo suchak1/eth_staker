@@ -159,10 +159,15 @@ class Snapshot:
         asg_name = f'ECS_{DEPLOY_ENV}_staking_ASG'
         asg = self.auto.describe_auto_scaling_groups(
             AutoScalingGroupNames=[asg_name])['AutoScalingGroups'][0]
-        update_asg = asg['LaunchTemplate']['Version'] != template_version
+
+        def is_latest_version(curr_version, latest_version):
+            curr_version == latest_version or curr_version == '$Latest'
+        update_asg = not is_latest_version(
+            asg['LaunchTemplate']['Version'],  template_version)
         instance = [instance for instance in asg['Instances']
                     if instance['InstanceId'] == self.instance_id][0]
-        refresh_instance = instance['LaunchTemplate']['Version'] != template_version
+        refresh_instance = not is_latest_version(
+            instance['LaunchTemplate']['Version'],  template_version)
         if update_asg:
             self.auto.update_auto_scaling_group(
                 AutoScalingGroupName=asg_name,
