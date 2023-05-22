@@ -22,6 +22,18 @@ class Snapshot:
         max_delta = timedelta(days=num_days)
         return actual_delta > max_delta
 
+    def force_create(self):
+        snapshot = self.ec2.create_snapshot(
+            VolumeId=self.volume_id,
+            TagSpecifications=[
+                {
+                    'ResourceType': 'snapshot',
+                    'Tags': [{'Key': 'type', 'Value': self.tag}]
+                }
+            ]
+        )
+        return snapshot
+
     def create(self, curr_snapshots):
         all_snapshots_are_old = all(
             [self.is_older_than(snapshot, SNAPSHOT_DAYS)
@@ -31,15 +43,7 @@ class Snapshot:
             # Don't need to wait for 'completed' status
             # As soon as function returns,
             # old state is preserved while snapshot is in progress
-            snapshot = self.ec2.create_snapshot(
-                VolumeId=self.volume_id,
-                TagSpecifications=[
-                    {
-                        'ResourceType': 'snapshot',
-                        'Tags': [{'Key': 'type', 'Value': self.tag}]
-                    }
-                ]
-            )
+            snapshot = self.force_create()
             self.put_param(snapshot['SnapshotId'])
             return snapshot
 
@@ -196,5 +200,4 @@ class Snapshot:
         return snapshot or self.find_most_recent(curr_snapshots)
 
     def terminate(self):
-        # TODO:
-        pass
+        self.ec2.terminate_instances(InstanceIds=[self.instance_id])
