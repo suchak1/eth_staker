@@ -170,16 +170,10 @@ class Snapshot:
                     'Version': '$Latest'
                 }
             )
-            # TODO: update asg
-            pass
         if update_asg or refresh_instance:
-            # need to terminate instance
             return True
 
         return False
-        # See if ASG is using latest template version
-        # If so, return false
-        # If not, then update ASG to use latest template version and return true
 
     def instance_is_draining(self):
         cluster_name = f'{DEPLOY_ENV}-staking-cluster'
