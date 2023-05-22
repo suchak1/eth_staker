@@ -170,7 +170,7 @@ Resources:
                   - 'ec2:CreateLaunchTemplateVersion'
                   - 'autoscaling:DescribeAutoScalingGroups'
                   - 'ec2:RunInstances'
-                  # - 'iam:PassRole'
+                  - 'iam:PassRole'
                 Resource: '*'
               - Effect: Allow
                 Action:
