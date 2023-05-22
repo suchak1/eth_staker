@@ -164,7 +164,16 @@ Resources:
                   - 'ec2:DeleteSnapshot'
                   - 'ec2:Describe*'
                   - 'ec2:GetLaunchTemplateData'
+                  - 'ec2:TerminateInstances'
+                  - 'ecs:ListContainerInstances'
+                  - 'ecs:DescribeContainerInstances'
+                  - 'ec2:CreateLaunchTemplateVersion'
                 Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'autoscaling:UpdateAutoScalingGroup'
+                  - 'autoscaling:DescribeAutoScalingGroups'
+                Resource: !Sub 'arn:aws:autoscaling:${AWS::Region}:${AWS::AccountId}:autoScalingGroup:*:autoScalingGroupName/ECS_${DeployEnv}_staking_ASG'
               - Effect: Allow
                 Action: 
                   - 'ec2:CreateTags'
