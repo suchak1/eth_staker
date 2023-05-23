@@ -299,14 +299,24 @@ signal.signal(signal.SIGTERM, handle_signal)
 
 node.run()
 
-# Extra:
+# TODO:
 # - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free, node exporter
 # - use spot instances
 #   - https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-launchtemplate-launchtemplatedata-instancemarketoptions-spotoptions.html
 #   - https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-autoscaling-autoscalinggroup-instancesdistribution.html
-#   - multiple zones
-#   - multiple instance types
+# - use spot fleet!
+#       https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-spotfleet-spotfleetlaunchspecification.html#cfn-ec2-spotfleet-spotfleetlaunchspecification-placement
+#   - multiple zones, us-east-1, us-east-2
+#       - comma delmited list https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-spotfleet-spotplacement.html#cfn-ec2-spotfleet-spotplacement-availabilityzone
+#   - multiple instance types - r6g, r7g, t4g, m6g, m7g
+#       - t series are better at cpu baselines below 40% https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances-unlimited-mode-concepts.html#unlimited-mode-surplus-credits
+#       - current cpu usage is well below 40% in both envs
+#       - use instance reqs instead of specific instance types? 2vCPU 16GB and 4vCPU 32GB LINUX ARM64
+#   - use price-capacity-optimized strategy
 #   - only use in dev until stable for prod
+# - cut max peers to save on data out costs
+
+# Extra:
 # turn off node for 10 min every 24 hrs?
 # - data integrity protection
 #   - shutdown / terminate instance if process fails and others continue => forces new vol from last snapshot
