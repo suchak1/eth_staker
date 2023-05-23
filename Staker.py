@@ -33,6 +33,7 @@ class Node:
         self.booster = Booster()
         self.kill_in_progress = False
         self.terminating = False
+        self.processes = []
 
     def run_cmd(self, cmd):
         print(f"Running cmd: {' '.join(cmd)}")
@@ -275,7 +276,6 @@ class Node:
         self.squeeze_logs(self.processes)
         print('Node stopped')
         if self.snapshot.instance_is_draining() and not self.terminating:
-            # take snapshot? can cause infinite loop? as termination at start can trigger this?
             self.snapshot.force_create()
             self.snapshot.update()
         exit(0)
