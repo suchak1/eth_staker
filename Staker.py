@@ -306,14 +306,19 @@ node.run()
 #   - https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-autoscaling-autoscalinggroup-instancesdistribution.html
 # - use spot fleet!
 #       https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-spotfleet-spotfleetlaunchspecification.html#cfn-ec2-spotfleet-spotfleetlaunchspecification-placement
-#   - multiple zones, us-east-1, us-east-2
-#       - comma delmited list https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-spotfleet-spotplacement.html#cfn-ec2-spotfleet-spotplacement-availabilityzone
+#   - multiple azs are more trouble than they're worth bc volumes/snapshots can only be used in one az
 #   - multiple instance types - r6g, r7g, t4g, m6g, m7g
-#       - t series are better at cpu baselines below 40% https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances-unlimited-mode-concepts.html#unlimited-mode-surplus-credits
+#       - t series are cheaper when cpu baseline is below 40% https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances-unlimited-mode-concepts.html#unlimited-mode-surplus-credits
 #       - current cpu usage is well below 40% in both envs
+#       - use memory-optimized r6g.large/xlarge first, if that fails then use t4g.xlarge/2xlarge
 #       - use instance reqs instead of specific instance types? 2vCPU 16GB and 4vCPU 32GB LINUX ARM64
 #   - use price-capacity-optimized strategy
-#   - only use in dev until stable for prod
+#   - only use in dev
+# for prod, use savings plan (strictly better alt to reserved instances)
+#   - compute savings plan ec2 - r6g.xlarge $0.10 53% 3 yrs upfront / $0.14 32% 1 yr upfront
+#       ∧∧∧ More flexible
+#       ∨∨∨ Limited to instance family r6g - bad if using t4g, fine for either r6g or m6g
+#   - ec2 instance savings pla - r6g.xlarge $0.08 62% 3 yrs upfront / $0.12 41% 1 yr upfront
 # - cut max peers to save on data out costs
 
 # Extra:
