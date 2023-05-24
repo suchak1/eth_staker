@@ -368,17 +368,10 @@ Resources:
         # This is Amazon Linux 2023 AMI for amd64
         ImageId: !If [UseAMD64, !Ref ECSOptimizedAMD64, !Ref ECSOptimizedARM64]
         InstanceInitiatedShutdownBehavior: terminate
-        InstanceMarketOptions:
-          !If 
-            - IsProd
-            - !Ref AWS::NoValue
-            - MarketType: spot
-              SpotOptions:
-                SpotInstanceType: one-time
         # # use this to specify reqs instead of instance type
         # InstanceRequirements: 
         #   InstanceRequirements
-        InstanceType: !Join [ "", [!If [UseAMD64, "t3", "m6g"], ".",  !If [IsProd, "2x", "x"], "large"] ]
+        InstanceType: !Join [ "r6", [!If [UseAMD64, "a", "g"], ".",  !If [IsProd, "x", ""], "large"] ]
         KeyName: !Sub "${DeployEnv}_staking_keys"
         MaintenanceOptions: 
           AutoRecovery: default
