@@ -311,8 +311,6 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       AutoScalingGroupName: !Sub "ECS_${DeployEnv}_staking_ASG"
-      AvailabilityZones: 
-        - !Sub "${AWS::Region}d"
       CapacityRebalance: false
       DesiredCapacity: !Sub "${DesiredCapacity}"
       LaunchTemplate: 
