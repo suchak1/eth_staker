@@ -236,7 +236,7 @@ class Node:
         terminate = self.snapshot.update()
         if terminate:
             self.terminating = True
-            # self.snapshot.terminate()
+            self.snapshot.terminate()
             while self.terminating:
                 pass
         while True:
