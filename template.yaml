@@ -369,7 +369,7 @@ Resources:
         # # use this to specify reqs instead of instance type
         # InstanceRequirements: 
         #   InstanceRequirements
-        InstanceType: !Join [ "", ["r6", !If [UseAMD64, "a", "g"], ".",  !If [IsProd, "x", ""], "large"] ]
+        InstanceType: !Join [ "", ["x2", !If [UseAMD64, "", "gd"], ".",  !If [IsProd, "large", "medium"], ""] ]
         KeyName: !Sub "${DeployEnv}_staking_keys"
         MaintenanceOptions: 
           AutoRecovery: default
