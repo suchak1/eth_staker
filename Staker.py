@@ -6,7 +6,7 @@ import logging
 from time import sleep
 import subprocess
 from glob import glob
-from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR
+from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR, MAX_PEERS
 from Backup import Snapshot
 from MEV import Booster
 
@@ -47,7 +47,7 @@ class Node:
 
     def execution(self):
         args = [
-            '--http', '--http.api', 'eth,net,engine,admin', '--metrics', '--pprof'
+            '--http', '--http.api', 'eth,net,engine,admin', '--metrics', '--pprof', '--maxpeers'
             # try this
             # '--metrics.expensive',
         ]
@@ -58,7 +58,10 @@ class Node:
             args.append("--mainnet")
 
         if AWS:
-            args += ["--datadir", self.geth_data_dir]
+            args += [
+                f"--datadir={self.geth_data_dir}",
+                f"--maxpeers={MAX_PEERS}"
+            ]
 
         cmd = ['geth'] + args
 
@@ -82,9 +85,11 @@ class Node:
             args.append('--mainnet')
 
         if AWS:
-            args.append(f"--datadir={self.prysm_data_dir}")
-            args.append(
-                f"--p2p-host-dns={'dev.' if DEV else ''}eth.forcepu.sh")
+            args += [
+                f"--datadir={self.prysm_data_dir}",
+                f"--p2p-host-dns={'dev.' if DEV else ''}eth.forcepu.sh",
+                f"--p2p-max-peers={MAX_PEERS}"
+            ]
 
         state_filename = glob(f'{prysm_dir}/state*.ssz')[0]
         block_filename = glob(f'{prysm_dir}/block*.ssz')[0]
