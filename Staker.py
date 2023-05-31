@@ -47,8 +47,9 @@ class Node:
 
     def execution(self):
         args = [
-            '--http', '--http.api', 'eth,net,engine,admin', '--metrics', '--pprof', '--maxpeers'
-            # try this
+            '--http', '--http.api', 'eth,net,engine,admin'
+            # metrics flags
+            # '--metrics', '--pprof',
             # '--metrics.expensive',
         ]
 
