@@ -30,7 +30,7 @@ RUN python3 -m pip install boto3 requests
 RUN mkdir -p "${EXEC_DIR}"
 WORKDIR "${EXEC_DIR}"
 ENV PLATFORM_ARCH "linux-${ARCH}"
-ENV GETH_VERSION 1.11.6-ea9e62ca
+ENV GETH_VERSION 1.12.0-e501b3b0
 ENV GETH_ARCHIVE "geth-${PLATFORM_ARCH}-${GETH_VERSION}"
 RUN curl -LO "https://gethstore.blob.core.windows.net/builds/${GETH_ARCHIVE}.tar.gz"
 RUN tar -xvzf "${GETH_ARCHIVE}.tar.gz"
@@ -43,7 +43,7 @@ ENV PATH "${PATH}:${EXEC_DIR}"
 # Download prysm (consensus)
 RUN mkdir -p "${PRYSM_DIR}"
 WORKDIR "${PRYSM_DIR}"
-ENV PRYSM_VERSION v4.0.5
+ENV PRYSM_VERSION v4.0.6
 RUN curl -Lo beacon-chain "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/beacon-chain-${PRYSM_VERSION}-${PLATFORM_ARCH}"
 RUN curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/validator-${PRYSM_VERSION}-${PLATFORM_ARCH}"
 RUN curl -Lo prysmctl "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/prysmctl-${PRYSM_VERSION}-${PLATFORM_ARCH}"
