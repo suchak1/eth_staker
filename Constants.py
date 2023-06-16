@@ -6,7 +6,7 @@ BEACONCHAIN_KEY = os.environ['BEACONCHAIN_KEY']
 ETH_ADDR = os.environ['ETH_ADDR']
 DEV = DEPLOY_ENV.lower() == 'dev'
 KILL_TIME = 15
-MAX_PEERS = 25
+MAX_PEERS = 10
 
 
 def get_env_bool(var_name):
