@@ -5,14 +5,11 @@ from Constants import RELAYS
 
 
 class Booster:
-    def __init__(self):
-        pass
-
     def get_relays(self):
         relays = {relay: 0 for relay in RELAYS}
         bad_relays = set()
         num_trials = 5
-        for i in range(num_trials):
+        for _ in range(num_trials):
             for relay in RELAYS:
                 if relay in bad_relays:
                     continue

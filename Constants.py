@@ -6,6 +6,7 @@ BEACONCHAIN_KEY = os.environ['BEACONCHAIN_KEY']
 ETH_ADDR = os.environ['ETH_ADDR']
 DEV = DEPLOY_ENV.lower() == 'dev'
 KILL_TIME = 15
+MAX_PEERS = 10
 
 
 def get_env_bool(var_name):
@@ -50,7 +51,7 @@ if DEV:
         # Flashbots
         'https://0xafa4c6985aa049fb79dd37010438cfebeb0f2bd42b115b89dd678dab0670c1de38da0c4e9138c9290a398ecd9a0b3110@builder-relay-goerli.flashbots.net',
         # bloXroute max profit
-        'https://0x821f2a65afb70e7f2e820a925a9b4c80a159620582c1766b1b09729fec178b11ea22abb3a51f07b288be815a1a2ff516@bloxroute.max-profit.builder.goerli.blxrbdn.com',
+        # 'https://0x821f2a65afb70e7f2e820a925a9b4c80a159620582c1766b1b09729fec178b11ea22abb3a51f07b288be815a1a2ff516@bloxroute.max-profit.builder.goerli.blxrbdn.com',
         # Blocknative
         'https://0x8f7b17a74569b7a57e9bdafd2e159380759f5dc3ccbd4bf600414147e8c4e1dc6ebada83c0139ac15850eb6c975e82d0@builder-relay-goerli.blocknative.com',
         # Eden

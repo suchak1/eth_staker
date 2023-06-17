@@ -161,16 +161,28 @@ Resources:
               - Effect: Allow
                 Action: 
                   - 'ec2:CreateSnapshot'
+                  - 'ec2:CreateTags'
                   - 'ec2:DeleteSnapshot'
                   - 'ec2:Describe*'
                   - 'ec2:GetLaunchTemplateData'
+                  - 'ec2:TerminateInstances'
+                  - 'ecs:ListContainerInstances'
+                  - 'ecs:DescribeContainerInstances'
+                  - 'ec2:CreateLaunchTemplateVersion'
+                  - 'autoscaling:DescribeAutoScalingGroups'
+                  - 'ec2:RunInstances'
+                  - 'iam:PassRole'
                 Resource: '*'
               - Effect: Allow
-                Action: 
-                  - 'ec2:CreateTags'
-                  # prob describe tags
-                  # maybe delete?
-                Resource: !Sub 'arn:aws:ec2:${AWS::Region}::snapshot/*'
+                Action:
+                  - 'autoscaling:UpdateAutoScalingGroup'
+                Resource: !Sub 'arn:aws:autoscaling:${AWS::Region}:${AWS::AccountId}:autoScalingGroup:*:autoScalingGroupName/ECS_${DeployEnv}_staking_ASG'
+              # - Effect: Allow
+              #   Action: 
+              #     - 'ec2:CreateTags'
+              #     # prob describe tags
+              #     # maybe delete?
+              #   Resource: !Sub 'arn:aws:ec2:${AWS::Region}::snapshot/*'
               - Effect: Allow
                 Action: 
                   - 'ssm:PutParameter'
@@ -264,8 +276,6 @@ Resources:
       ClusterSettings:
         - Name: containerInsights
           Value: enabled
-      # ECS Execute logging is defined in Config
-      # CONFIGURE LOGGING HERE
   ECSService:
       Type: AWS::ECS::Service
       DependsOn: 
@@ -301,9 +311,7 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       AutoScalingGroupName: !Sub "ECS_${DeployEnv}_staking_ASG"
-      AvailabilityZones: 
-        - !Sub "${AWS::Region}d"
-      CapacityRebalance: true
+      CapacityRebalance: false
       DesiredCapacity: !Sub "${DesiredCapacity}"
       LaunchTemplate: 
         LaunchTemplateId: !Ref LaunchTemplate
@@ -333,7 +341,8 @@ Resources:
       - ElasticIP
     Type: AWS::EC2::LaunchTemplate
     Properties: 
-      LaunchTemplateData: 
+      LaunchTemplateData:
+        
         BlockDeviceMappings:
           - 
             DeviceName: /dev/sdx
@@ -357,16 +366,10 @@ Resources:
         # This is Amazon Linux 2023 AMI for amd64
         ImageId: !If [UseAMD64, !Ref ECSOptimizedAMD64, !Ref ECSOptimizedARM64]
         InstanceInitiatedShutdownBehavior: terminate
-        # for spot instances
-        # InstanceMarketOptions: 
-        #   InstanceMarketOptions
         # # use this to specify reqs instead of instance type
         # InstanceRequirements: 
         #   InstanceRequirements
-        # Try m6g.large (7.5% savings) or m7g.large (2% savings) in dev 
-        #   - jk crashes bc of cpu and mem usage on t3.large
-        # and m6g.xlarge or m7g.xlarge in prod
-        InstanceType: !Join [ "", [!If [UseAMD64, "t3", "m6g"], ".",  !If [IsProd, "2x", "x"], "large"] ]
+        InstanceType: !Join [ "", ["x2", !If [UseAMD64, "", "gd"], ".",  !If [IsProd, "large", "medium"], ""] ]
         KeyName: !Sub "${DeployEnv}_staking_keys"
         MaintenanceOptions: 
           AutoRecovery: default
@@ -396,8 +399,12 @@ Resources:
             #!/bin/bash
 
             # Start ECS agent and register task
-            echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
-            echo ECS_ENABLE_CONTAINER_METADATA=true >> /etc/ecs/ecs.config
+            cat <<'EOF' >> /etc/ecs/ecs.config
+            ECS_CLUSTER=${ECSCluster}
+            ECS_ENABLE_CONTAINER_METADATA=true
+            ECS_ENABLE_SPOT_INSTANCE_DRAINING=true
+            ECS_CONTAINER_STOP_TIMEOUT=120s
+            EOF
             yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_${Arch}/amazon-ssm-agent.rpm
             yum install -y https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/${Arch}/latest/amazon-cloudwatch-agent.rpm
             yum install -y aws-cfn-bootstrap hibagent 

@@ -6,7 +6,7 @@ import logging
 from time import sleep
 import subprocess
 from glob import glob
-from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR
+from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR, MAX_PEERS
 from Backup import Snapshot
 from MEV import Booster
 
@@ -32,6 +32,8 @@ class Node:
         self.snapshot = Snapshot()
         self.booster = Booster()
         self.kill_in_progress = False
+        self.terminating = False
+        self.processes = []
 
     def run_cmd(self, cmd):
         print(f"Running cmd: {' '.join(cmd)}")
@@ -45,8 +47,9 @@ class Node:
 
     def execution(self):
         args = [
-            '--http', '--http.api', 'eth,net,engine,admin', '--metrics', '--pprof'
-            # try this
+            '--http', '--http.api', 'eth,net,engine,admin'
+            # metrics flags
+            # '--metrics', '--pprof',
             # '--metrics.expensive',
         ]
 
@@ -56,7 +59,10 @@ class Node:
             args.append("--mainnet")
 
         if AWS:
-            args += ["--datadir", self.geth_data_dir]
+            args += [
+                f"--datadir={self.geth_data_dir}",
+                f"--maxpeers={MAX_PEERS}"
+            ]
 
         cmd = ['geth'] + args
 
@@ -80,9 +86,11 @@ class Node:
             args.append('--mainnet')
 
         if AWS:
-            args.append(f"--datadir={self.prysm_data_dir}")
-            args.append(
-                f"--p2p-host-dns={'dev.' if DEV else ''}eth.forcepu.sh")
+            args += [
+                f"--datadir={self.prysm_data_dir}",
+                f"--p2p-host-dns={'dev.' if DEV else ''}eth.forcepu.sh",
+                f"--p2p-max-peers={MAX_PEERS}"
+            ]
 
         state_filename = glob(f'{prysm_dir}/state*.ssz')[0]
         block_filename = glob(f'{prysm_dir}/block*.ssz')[0]
@@ -157,10 +165,10 @@ class Node:
                 'process': self.consensus(),
                 'prefix': "[[[ CONSENSUS ]]]"
             },
-            # {
-            #     'process': self.validation(),
-            #     'prefix': '(( _VALIDATION ))'
-            # },
+            {
+                'process': self.validation(),
+                'prefix': '(( _VALIDATION ))'
+            },
             {
                 'process': self.mev(),
                 'prefix': "+++ MEV_BOOST +++"
@@ -231,6 +239,12 @@ class Node:
         return any(self.poll_processes(processes))
 
     def run(self):
+        terminate = self.snapshot.update()
+        if terminate:
+            self.terminating = True
+            self.snapshot.terminate()
+            while self.terminating:
+                pass
         while True:
             self.most_recent = self.snapshot.backup()
             self.relays = self.booster.get_relays()
@@ -258,37 +272,49 @@ class Node:
             # Log rest of output
             self.squeeze_logs(processes)
 
+    def stop(self):
+        self.kill_in_progress = True
+        self.interrupt()
+        sleep(KILL_TIME)
+        self.terminate()
+        sleep(KILL_TIME)
+        self.kill()
+        self.squeeze_logs(self.processes)
+        print('Node stopped')
+        if self.snapshot.instance_is_draining() and not self.terminating:
+            self.snapshot.force_create()
+            self.snapshot.update()
+        exit(0)
+
 
 node = Node()
 
 
-def stop_node(*_):
-    node.kill_in_progress = True
-    node.interrupt()
-    sleep(KILL_TIME)
-    node.terminate()
-    sleep(KILL_TIME)
-    node.kill()
-    node.squeeze_logs(node.processes)
-    print('Node stopped.')
-    exit(0)
+def handle_signal(*_):
+    node.stop()
 
 
-signal.signal(signal.SIGINT, stop_node)
-signal.signal(signal.SIGTERM, stop_node)
+signal.signal(signal.SIGINT, handle_signal)
+signal.signal(signal.SIGTERM, handle_signal)
+# add wait handler that handles wait signal by setting self.continue = True in init and replace both while True:
+# with while self.continue
+# wait handler will self.interrupt() and then self.continue to false
+
+# add waiting for snapshot to be available before restarting processes?
+#
 
 node.run()
 
-# Extra:
+# TODO:
 # - export metrics / have an easy way to monitor, Prometheus and Grafana Cloud free, node exporter
-# - use spot instances
-#   - https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-launchtemplate-launchtemplatedata-instancemarketoptions-spotoptions.html
-#   - https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-autoscaling-autoscalinggroup-instancesdistribution.html
-#   - multiple zones
-#   - multiple instance types
-#   - enable capacity rebalancing
-#   - only use in dev until stable for prod
-#   - possibly t4g.xlarge?
+# for prod, use savings plan (strictly better alt to reserved instances)
+#   - compute savings plan ec2 - r6g.xlarge $0.10 53% 3 yrs upfront / $0.14 32% 1 yr upfront
+#       ∧∧∧ More flexible
+#       ∨∨∨ Limited to instance family r6g - bad if using t4g, fine for either r6g or m6g
+#   - ec2 instance savings pla - r6g.xlarge $0.08 62% 3 yrs upfront / $0.12 41% 1 yr upfront
+# - cut max peers to save on data out costs
+
+# Extra:
 # turn off node for 10 min every 24 hrs?
 # - data integrity protection
 #   - shutdown / terminate instance if process fails and others continue => forces new vol from last snapshot

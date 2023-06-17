@@ -9,6 +9,8 @@ class Snapshot:
         self.tag = f'{DEPLOY_ENV}_staking_snapshot'
         self.ec2 = boto3.client('ec2')
         self.ssm = boto3.client('ssm')
+        self.auto = boto3.client('autoscaling')
+        self.ecs = boto3.client('ecs')
         if AWS:
             self.volume_id = self.get_prefix_id('VOLUME')
             self.instance_id = self.get_prefix_id('INSTANCE')
@@ -20,6 +22,18 @@ class Snapshot:
         max_delta = timedelta(days=num_days)
         return actual_delta > max_delta
 
+    def force_create(self):
+        snapshot = self.ec2.create_snapshot(
+            VolumeId=self.volume_id,
+            TagSpecifications=[
+                {
+                    'ResourceType': 'snapshot',
+                    'Tags': [{'Key': 'type', 'Value': self.tag}]
+                }
+            ]
+        )
+        return snapshot
+
     def create(self, curr_snapshots):
         all_snapshots_are_old = all(
             [self.is_older_than(snapshot, SNAPSHOT_DAYS)
@@ -29,24 +43,8 @@ class Snapshot:
             # Don't need to wait for 'completed' status
             # As soon as function returns,
             # old state is preserved while snapshot is in progress
-            snapshot = self.ec2.create_snapshot(
-                VolumeId=self.volume_id,
-                TagSpecifications=[
-                    {
-                        'ResourceType': 'snapshot',
-                        'Tags': [{'Key': 'type', 'Value': self.tag}]
-                    }
-                ]
-            )
-            self.ssm.put_parameter(
-                Name=self.tag,
-                Value=snapshot['SnapshotId'],
-                Type='String',
-                Overwrite=True,
-                Tier='Standard',
-                DataType='text'
-            )
-
+            snapshot = self.force_create()
+            self.put_param(snapshot['SnapshotId'])
             return snapshot
 
     def get_prefix_id(self, prefix):
@@ -68,26 +66,12 @@ class Snapshot:
         return snapshots
 
     def get_exceptions(self):
-        exceptions = set()
-        try:
-            # Add existing snapshot id from ssm
-            exceptions.add(self.ssm.get_parameter(
-                Name=self.tag)['Parameter']['Value'])
-        except Exception as e:
-            logging.exception(e)
-
-        try:
-            # Add snapshot id from current instance's launch template
-            if AWS:
-                launch_template = self.ec2.get_launch_template_data(
-                    InstanceId=self.instance_id)
-                for device in launch_template['LaunchTemplateData']['BlockDeviceMappings']:
-                    if device['DeviceName'] == '/dev/sdx':
-                        exceptions.add(device['Ebs']['SnapshotId'])
-                        break
-        except Exception as e:
-            logging.exception(e)
-
+        exceptions = set([
+            exception for exception in [
+                         self.get_param(),
+                         self.get_curr_snapshot_id()
+                         ] if exception
+        ])
         return exceptions
 
     def get_snapshot_time(self, snapshot):
@@ -117,9 +101,103 @@ class Snapshot:
                 SnapshotId=snapshot['SnapshotId'],
             )
 
+    def put_param(self, snapshot_id):
+        self.ssm.put_parameter(
+            Name=self.tag,
+            Value=snapshot_id,
+            Type='String',
+            Overwrite=True,
+            Tier='Standard',
+            DataType='text'
+        )
+
+    def get_param(self):
+        val = None
+        try:
+            # Add existing snapshot id from ssm
+            val = self.ssm.get_parameter(
+                Name=self.tag)['Parameter']['Value']
+        except Exception as e:
+            logging.exception(e)
+        return val
+
+    def get_curr_snapshot_id(self):
+        val = None
+        try:
+            # Add snapshot id from current instance's launch template
+            if AWS:
+                launch_template = self.ec2.get_launch_template_data(
+                    InstanceId=self.instance_id)
+                for device in launch_template['LaunchTemplateData']['BlockDeviceMappings']:
+                    if device['DeviceName'] == '/dev/sdx':
+                        val = device['Ebs']['SnapshotId']
+                        break
+        except Exception as e:
+            logging.exception(e)
+
+        return val
+
+    def update(self):
+        curr_snapshots = self.get_snapshots()
+        most_recent = self.find_most_recent(curr_snapshots)
+        recent_snapshot_id = most_recent['SnapshotId']
+        if self.get_param() != recent_snapshot_id:
+            self.put_param(recent_snapshot_id)
+        template_name = f'{DEPLOY_ENV}_launch_template'
+        launch_template = self.ec2.describe_launch_template_versions(
+            LaunchTemplateName=template_name, Versions=['$Latest'])['LaunchTemplateVersions'][0]
+        for device in launch_template['LaunchTemplateData']['BlockDeviceMappings']:
+            if device['DeviceName'] == '/dev/sdx':
+                vol = device
+                curr_snapshot_id = device['Ebs']['SnapshotId']
+                break
+        template_version = str(launch_template['VersionNumber'])
+        if curr_snapshot_id != recent_snapshot_id:
+            vol['Ebs']['SnapshotId'] = recent_snapshot_id
+            template_version = str(self.ec2.create_launch_template_version(
+                LaunchTemplateName=template_name, SourceVersion=template_version, LaunchTemplateData={'BlockDeviceMappings': [vol]})['LaunchTemplateVersion']['VersionNumber'])
+        asg_name = f'ECS_{DEPLOY_ENV}_staking_ASG'
+        asg = self.auto.describe_auto_scaling_groups(
+            AutoScalingGroupNames=[asg_name])['AutoScalingGroups'][0]
+
+        def is_latest_version(curr_version, latest_version):
+            return curr_version == latest_version or curr_version == '$Latest'
+        update_asg = not is_latest_version(
+            str(asg['LaunchTemplate']['Version']),  template_version)
+        instance = [instance for instance in asg['Instances']
+                    if instance['InstanceId'] == self.instance_id][0]
+        refresh_instance = not is_latest_version(
+            str(instance['LaunchTemplate']['Version']),  template_version)
+        if update_asg:
+            self.auto.update_auto_scaling_group(
+                AutoScalingGroupName=asg_name,
+                LaunchTemplate={
+                    'LaunchTemplateName': template_name,
+                    'Version': '$Latest'
+                }
+            )
+        if update_asg or refresh_instance:
+            return True
+
+        return False
+
+    def instance_is_draining(self):
+        cluster_name = f'{DEPLOY_ENV}-staking-cluster'
+        container_instance_arns = self.ecs.list_container_instances(
+            cluster=cluster_name)['containerInstanceArns']
+        container_instances = self.ecs.describe_container_instances(
+            cluster=cluster_name, containerInstances=container_instance_arns)['containerInstances']
+        container_instance = [
+            instance for instance in container_instances if instance['ec2InstanceId'] == self.instance_id][0]
+        status = container_instance['status']
+        return status == 'DRAINING'
+
     def backup(self):
         curr_snapshots = self.get_snapshots()
         exceptions = self.get_exceptions()
         snapshot = self.create(curr_snapshots)
         self.purge(curr_snapshots, exceptions)
         return snapshot or self.find_most_recent(curr_snapshots)
+
+    def terminate(self):
+        self.ec2.terminate_instances(InstanceIds=[self.instance_id])
