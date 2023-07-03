@@ -6,7 +6,7 @@ import logging
 from time import sleep
 import subprocess
 from glob import glob
-from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR, MAX_PEERS
+from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR, MAX_PEERS, DOCKER
 from Backup import Snapshot
 from MEV import Booster
 
@@ -17,7 +17,7 @@ platform = sys.platform.lower()
 class Node:
     def __init__(self):
         on_mac = platform == 'darwin'
-        prefix = f"{'/mnt/ebs' if AWS else home_dir}"
+        prefix = f"{'/mnt/ebs' if DOCKER else home_dir}"
         geth_dir_base = f"/{'Library/Ethereum' if on_mac else '.ethereum'}"
         prysm_dir_base = f"/{'Library/Eth2' if on_mac else '.eth2'}"
         prysm_wallet_postfix = f"{'V' if on_mac else 'v'}alidators/prysm-wallet-v2"
@@ -58,7 +58,7 @@ class Node:
         else:
             args.append("--mainnet")
 
-        if AWS:
+        if DOCKER:
             args += [
                 f"--datadir={self.geth_data_dir}",
                 f"--maxpeers={MAX_PEERS}"
@@ -85,12 +85,14 @@ class Node:
         else:
             args.append('--mainnet')
 
-        if AWS:
+        if DOCKER:
             args += [
                 f"--datadir={self.prysm_data_dir}",
-                f"--p2p-host-dns={'dev.' if DEV else ''}eth.forcepu.sh",
                 f"--p2p-max-peers={MAX_PEERS}"
             ]
+        
+        if AWS:
+            args += [f"--p2p-host-dns={'dev.' if DEV else ''}eth.forcepu.sh"]
 
         state_filename = glob(f'{prysm_dir}/state*.ssz')[0]
         block_filename = glob(f'{prysm_dir}/block*.ssz')[0]
@@ -165,10 +167,10 @@ class Node:
                 'process': self.consensus(),
                 'prefix': "[[[ CONSENSUS ]]]"
             },
-            {
-                'process': self.validation(),
-                'prefix': '(( _VALIDATION ))'
-            },
+            # {
+            #     'process': self.validation(),
+            #     'prefix': '(( _VALIDATION ))'
+            # },
             {
                 'process': self.mev(),
                 'prefix': "+++ MEV_BOOST +++"
@@ -239,14 +241,16 @@ class Node:
         return any(self.poll_processes(processes))
 
     def run(self):
-        terminate = self.snapshot.update()
-        if terminate:
-            self.terminating = True
-            self.snapshot.terminate()
-            while self.terminating:
-                pass
+        if AWS:
+            terminate = self.snapshot.update()
+            if terminate:
+                self.terminating = True
+                self.snapshot.terminate()
+                while self.terminating:
+                    pass
         while True:
-            self.most_recent = self.snapshot.backup()
+            if AWS:
+                self.most_recent = self.snapshot.backup()
             self.relays = self.booster.get_relays()
             processes, streams = self.start()
             backup_is_recent = True
@@ -255,7 +259,7 @@ class Node:
             while True:
                 rstreams, _, _ = select.select(streams, [], [])
                 backup_is_recent = not self.snapshot.is_older_than(
-                    self.most_recent, SNAPSHOT_DAYS)
+                    self.most_recent, SNAPSHOT_DAYS) if AWS else True
                 if not backup_is_recent and not sent_interrupt:
                     print('Pausing node to initiate snapshot.')
                     self.interrupt(hard=False)
@@ -281,7 +285,7 @@ class Node:
         self.kill()
         self.squeeze_logs(self.processes)
         print('Node stopped')
-        if self.snapshot.instance_is_draining() and not self.terminating:
+        if AWS and self.snapshot.instance_is_draining() and not self.terminating:
             self.snapshot.force_create()
             self.snapshot.update()
         exit(0)

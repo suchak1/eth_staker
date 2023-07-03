@@ -205,6 +205,8 @@ Resources:
               Value: !Ref BeaconChainKey
             - Name: ETH_ADDR
               Value: !Ref EthAddr
+            - Name: DOCKER
+              Value: true
           Essential: true
           MountPoints:
             - ContainerPath: /mnt/ebs
