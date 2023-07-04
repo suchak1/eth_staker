@@ -97,9 +97,5 @@ ENV PATH "${PATH}:${EXTRA_DIR}"
 # Run app
 WORKDIR "${ETH_DIR}"
 COPY Staker.py Backup.py Constants.py MEV.py ./
-EXPOSE 13000/udp
-EXPOSE 13000/tcp
-EXPOSE 12000/udp
-EXPOSE 30303/udp
-EXPOSE 30303/tcp
+EXPOSE 30303/tcp 30303/udp 13000/tcp 12000/udp
 ENTRYPOINT ["python3", "Staker.py"]

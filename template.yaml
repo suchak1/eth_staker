@@ -54,26 +54,12 @@ Resources:
     DependsOn: ElasticIP
     Type: AWS::Route53::RecordSet
     Properties: 
-      # AliasTarget: 
-      #   AliasTarget
-      # CidrRoutingConfig: 
-      #   CidrRoutingConfig
-      # Comment: String
-      # Failover: String
-      # GeoLocation: 
-      #   GeoLocation
-      # HealthCheckId: String
       HostedZoneId: !Ref HostedZoneId
-      # HostedZoneName: forcepu.sh
-      # MultiValueAnswer: Boolean
       Name: !Join [ "", [!If [IsProd, "", "dev."], eth.forcepu.sh ] ]
-      # Region: !Ref AWS::Region
       ResourceRecords: 
         - !GetAtt ElasticIP.PublicIp
-      # SetIdentifier: String
       TTL: 172800
       Type: A
-      # Weight: Integer
   InstanceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -129,16 +115,12 @@ Resources:
     Type: AWS::EC2::EIP
     Properties: 
       Domain: vpc
-      # InstanceId: String
       NetworkBorderGroup: !Ref AWS::Region
-      # PublicIpv4Pool: String
-      # TransferAddress: String
   InstanceProfile:
     DependsOn: InstanceRole
     Type: AWS::IAM::InstanceProfile
     Properties: 
       InstanceProfileName: !Sub "${DeployEnv}StakingInstanceProfile"
-      # Path: String
       Roles: 
         - !Sub "${DeployEnv}StakingInstanceRole"
   TaskRole:
