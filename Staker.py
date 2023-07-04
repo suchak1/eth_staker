@@ -157,6 +157,11 @@ class Node:
         cmd = ['eth2-client-metrics-exporter'] + args
         return self.run_cmd(cmd)
 
+    def vpn(self):
+        args = ['--config', "OpenVPN 2023/OpenVPN/US_Miami_TCP.ovpn"]
+        cmd = ['openvpn'] + args
+        return self.run_cmd(cmd)
+
     def start(self):
         processes = [
             {
@@ -188,6 +193,13 @@ class Node:
             #     'prefix': '____BEACONCHA.IN_'
             # }
         ]
+        if not AWS:
+            processes.append(
+                {
+                    'process': self.vpn(),
+                    'prefix': 'xxx OPENVPN__ xxx'
+                }
+            )
         streams = []
         # Label processes with log prefix
         for meta in processes:

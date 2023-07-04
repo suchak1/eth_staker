@@ -5,9 +5,11 @@ FROM ubuntu:23.04
 ARG DEPLOY_ENV
 ARG VERSION
 ARG ARCH
+ARG VPN
 ENV DEPLOY_ENV "${DEPLOY_ENV:-prod}"
 ENV VERSION "${VERSION}"
 ENV ARCH "${ARCH:-arm64}"
+ENV VPN "${VPN:-false}"
 
 ENV ETH_DIR "${HOME}/ethereum"
 ENV EXEC_DIR "${ETH_DIR}/execution"
@@ -96,6 +98,9 @@ ENV PATH "${PATH}:${EXTRA_DIR}"
 
 # Run app
 WORKDIR "${ETH_DIR}"
+COPY "${ETH_DIR}/scripts/vpn.sh" .
+RUN bash vpn.sh
+
 COPY Staker.py Backup.py Constants.py MEV.py ./
 EXPOSE 30303/tcp 30303/udp 13000/tcp 12000/udp
 ENTRYPOINT ["python3", "Staker.py"]
