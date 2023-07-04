@@ -21,6 +21,10 @@ MAX_SNAPSHOTS = 3
 SNAPSHOT_DAYS = 30
 MAX_SNAPSHOT_DAYS = MAX_SNAPSHOTS * SNAPSHOT_DAYS
 
+# if not AWS:
+#     IVACY_USER = os.environ['IVACY_USER']
+#     IVACY_PASS = os.environ['IVACY_PASS']
+
 
 # mainnet
 RELAYS = [

@@ -158,7 +158,11 @@ class Node:
         return self.run_cmd(cmd)
 
     def vpn(self):
-        args = ['--config', "OpenVPN 2023/OpenVPN/US_Miami_TCP.ovpn"]
+        IVACY_USER = os.environ['IVACY_USER']
+        IVACY_PASS = os.environ['IVACY_PASS']
+        with open('vpn_creds.txt', 'r') as file:
+            file.write(f'{IVACY_USER}\n{IVACY_PASS}')
+        args = ['--config', '"OpenVPN 2023/OpenVPN/US_Miami_TCP.ovpn"', '--auth-user-pass', 'vpn_creds.txt']
         cmd = ['openvpn'] + args
         return self.run_cmd(cmd)
 
