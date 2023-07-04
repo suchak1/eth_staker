@@ -61,7 +61,7 @@ class Node:
         if DOCKER:
             args += [
                 f"--datadir={self.geth_data_dir}",
-                f"--maxpeers={MAX_PEERS}"
+                # f"--maxpeers={MAX_PEERS}"
             ]
 
         cmd = ['geth'] + args
@@ -88,7 +88,7 @@ class Node:
         if DOCKER:
             args += [
                 f"--datadir={self.prysm_data_dir}",
-                f"--p2p-max-peers={MAX_PEERS}"
+                # f"--p2p-max-peers={MAX_PEERS}"
             ]
         
         if AWS:
@@ -160,7 +160,7 @@ class Node:
     def vpn(self):
         IVACY_USER = os.environ['IVACY_USER']
         IVACY_PASS = os.environ['IVACY_PASS']
-        with open('vpn_creds.txt', 'r') as file:
+        with open('vpn_creds.txt', 'w') as file:
             file.write(f'{IVACY_USER}\n{IVACY_PASS}')
         args = ['--config', '"OpenVPN 2023/OpenVPN/US_Miami_TCP.ovpn"', '--auth-user-pass', 'vpn_creds.txt']
         cmd = ['openvpn'] + args

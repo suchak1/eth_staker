@@ -11,7 +11,7 @@ docker run \
     --env IVACY_USER="${IVACY_USER}" \
     --env IVACY_PASS="${IVACY_PASS}" \
     --cap-add=NET_ADMIN \
-    --device=/dev/net/tun \ 
+    --device=/dev/net/tun \
     -p 30303:30303/tcp \
     -p 30303:30303/udp \
     -p 13000:13000/tcp \
