@@ -18,4 +18,6 @@ docker run \
     -p 12000:12000/udp \
     -v ~:/mnt/ebs \
     --dns 8.8.8.8 \
+    --name ethereum \
+    --rm \
     ethereum
