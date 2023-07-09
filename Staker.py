@@ -34,6 +34,9 @@ class Node:
         self.kill_in_progress = False
         self.terminating = False
         self.processes = []
+        self.logs_file = f"/mnt/ebs{'' if AWS else '/ethereum'}/logs.txt"
+        with open(self.logs_file, 'w') as _:
+            pass
 
     def run_cmd(self, cmd):
         print(f"Running cmd: {' '.join(cmd)}")
@@ -167,7 +170,14 @@ class Node:
         return self.run_cmd(cmd)
 
     def start(self):
-        processes = [
+        processes = []
+        if not AWS:
+            processes.append({
+                    'process': self.vpn(),
+                    'prefix': 'xxx OPENVPN__ xxx'
+            })
+            sleep(15)
+        processes += [
             {
                 'process': self.execution(),
                 'prefix': '<<< EXECUTION >>>'
@@ -197,13 +207,7 @@ class Node:
             #     'prefix': '____BEACONCHA.IN_'
             # }
         ]
-        if not AWS:
-            processes.append(
-                {
-                    'process': self.vpn(),
-                    'prefix': 'xxx OPENVPN__ xxx'
-                }
-            )
+        
         streams = []
         # Label processes with log prefix
         for meta in processes:
@@ -235,7 +239,10 @@ class Node:
     def print_line(self, prefix, line):
         line = line.decode('UTF-8').strip()
         if line:
-            print(f"{prefix} {line}")
+            log = f"{prefix} {line}"
+            print(log)
+            with open(self.logs_file, 'a') as file:
+                file.write(f'{log}\n')
 
     def stream_logs(self, rstreams):
         for stream in rstreams:
@@ -319,9 +326,6 @@ signal.signal(signal.SIGTERM, handle_signal)
 # add wait handler that handles wait signal by setting self.continue = True in init and replace both while True:
 # with while self.continue
 # wait handler will self.interrupt() and then self.continue to false
-
-# add waiting for snapshot to be available before restarting processes?
-#
 
 node.run()
 
