@@ -186,10 +186,10 @@ class Node:
                 'process': self.consensus(),
                 'prefix': "[[[ CONSENSUS ]]]"
             },
-            # {
-            #     'process': self.validation(),
-            #     'prefix': '(( _VALIDATION ))'
-            # },
+            {
+                'process': self.validation(),
+                'prefix': '(( _VALIDATION ))'
+            },
             {
                 'process': self.mev(),
                 'prefix': "+++ MEV_BOOST +++"
