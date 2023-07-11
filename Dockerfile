@@ -100,7 +100,6 @@ ENV PATH "${PATH}:${EXTRA_DIR}"
 WORKDIR "${ETH_DIR}"
 COPY "scripts/vpn.sh" .
 RUN bash vpn.sh
-COPY config config
 
 COPY Staker.py Backup.py Constants.py MEV.py ./
 EXPOSE 30303/tcp 30303/udp 13000/tcp 12000/udp
