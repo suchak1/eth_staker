@@ -6,3 +6,5 @@ execution
 *prometheus.yml
 cmd.txt
 extra
+*.txt
+config

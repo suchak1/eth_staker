@@ -15,11 +15,11 @@ def get_env_bool(var_name):
 
 
 AWS = get_env_bool('AWS')
+DOCKER = get_env_bool('DOCKER')
 
 MAX_SNAPSHOTS = 3
 SNAPSHOT_DAYS = 30
 MAX_SNAPSHOT_DAYS = MAX_SNAPSHOTS * SNAPSHOT_DAYS
-
 
 # mainnet
 RELAYS = [

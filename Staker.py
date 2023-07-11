@@ -6,7 +6,7 @@ import logging
 from time import sleep
 import subprocess
 from glob import glob
-from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR, MAX_PEERS
+from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR, MAX_PEERS, DOCKER
 from Backup import Snapshot
 from MEV import Booster
 
@@ -17,7 +17,7 @@ platform = sys.platform.lower()
 class Node:
     def __init__(self):
         on_mac = platform == 'darwin'
-        prefix = f"{'/mnt/ebs' if AWS else home_dir}"
+        prefix = f"{'/mnt/ebs' if DOCKER else home_dir}"
         geth_dir_base = f"/{'Library/Ethereum' if on_mac else '.ethereum'}"
         prysm_dir_base = f"/{'Library/Eth2' if on_mac else '.eth2'}"
         prysm_wallet_postfix = f"{'V' if on_mac else 'v'}alidators/prysm-wallet-v2"
@@ -34,6 +34,9 @@ class Node:
         self.kill_in_progress = False
         self.terminating = False
         self.processes = []
+        self.logs_file = f"/mnt/ebs{'' if AWS else '/ethereum'}/logs.txt"
+        with open(self.logs_file, 'w') as _:
+            pass
 
     def run_cmd(self, cmd):
         print(f"Running cmd: {' '.join(cmd)}")
@@ -58,10 +61,10 @@ class Node:
         else:
             args.append("--mainnet")
 
-        if AWS:
+        if DOCKER:
             args += [
                 f"--datadir={self.geth_data_dir}",
-                f"--maxpeers={MAX_PEERS}"
+                # f"--maxpeers={MAX_PEERS}"
             ]
 
         cmd = ['geth'] + args
@@ -85,12 +88,14 @@ class Node:
         else:
             args.append('--mainnet')
 
-        if AWS:
+        if DOCKER:
             args += [
                 f"--datadir={self.prysm_data_dir}",
-                f"--p2p-host-dns={'dev.' if DEV else ''}eth.forcepu.sh",
-                f"--p2p-max-peers={MAX_PEERS}"
+                # f"--p2p-max-peers={MAX_PEERS}"
             ]
+        
+        if AWS:
+            args += [f"--p2p-host-dns={'dev.' if DEV else ''}eth.forcepu.sh"]
 
         state_filename = glob(f'{prysm_dir}/state*.ssz')[0]
         block_filename = glob(f'{prysm_dir}/block*.ssz')[0]
@@ -155,8 +160,24 @@ class Node:
         cmd = ['eth2-client-metrics-exporter'] + args
         return self.run_cmd(cmd)
 
+    def vpn(self):
+        IVACY_USER = os.environ['IVACY_USER']
+        IVACY_PASS = os.environ['IVACY_PASS']
+        with open('vpn_creds.txt', 'w') as file:
+            file.write(f'{IVACY_USER}\n{IVACY_PASS}')
+        args = ['--config', 'config/US_Miami_TCP.ovpn', '--auth-user-pass', 'vpn_creds.txt']
+        cmd = ['openvpn'] + args
+        return self.run_cmd(cmd)
+
     def start(self):
-        processes = [
+        processes = []
+        if not AWS:
+            processes.append({
+                    'process': self.vpn(),
+                    'prefix': 'xxx OPENVPN__ xxx'
+            })
+            sleep(15)
+        processes += [
             {
                 'process': self.execution(),
                 'prefix': '<<< EXECUTION >>>'
@@ -186,6 +207,7 @@ class Node:
             #     'prefix': '____BEACONCHA.IN_'
             # }
         ]
+        
         streams = []
         # Label processes with log prefix
         for meta in processes:
@@ -217,7 +239,10 @@ class Node:
     def print_line(self, prefix, line):
         line = line.decode('UTF-8').strip()
         if line:
-            print(f"{prefix} {line}")
+            log = f"{prefix} {line}"
+            print(log)
+            with open(self.logs_file, 'a') as file:
+                file.write(f'{log}\n')
 
     def stream_logs(self, rstreams):
         for stream in rstreams:
@@ -239,14 +264,16 @@ class Node:
         return any(self.poll_processes(processes))
 
     def run(self):
-        terminate = self.snapshot.update()
-        if terminate:
-            self.terminating = True
-            self.snapshot.terminate()
-            while self.terminating:
-                pass
+        if AWS:
+            terminate = self.snapshot.update()
+            if terminate:
+                self.terminating = True
+                self.snapshot.terminate()
+                while self.terminating:
+                    pass
         while True:
-            self.most_recent = self.snapshot.backup()
+            if AWS:
+                self.most_recent = self.snapshot.backup()
             self.relays = self.booster.get_relays()
             processes, streams = self.start()
             backup_is_recent = True
@@ -255,7 +282,7 @@ class Node:
             while True:
                 rstreams, _, _ = select.select(streams, [], [])
                 backup_is_recent = not self.snapshot.is_older_than(
-                    self.most_recent, SNAPSHOT_DAYS)
+                    self.most_recent, SNAPSHOT_DAYS) if AWS else True
                 if not backup_is_recent and not sent_interrupt:
                     print('Pausing node to initiate snapshot.')
                     self.interrupt(hard=False)
@@ -281,7 +308,7 @@ class Node:
         self.kill()
         self.squeeze_logs(self.processes)
         print('Node stopped')
-        if self.snapshot.instance_is_draining() and not self.terminating:
+        if AWS and self.snapshot.instance_is_draining() and not self.terminating:
             self.snapshot.force_create()
             self.snapshot.update()
         exit(0)
@@ -299,9 +326,6 @@ signal.signal(signal.SIGTERM, handle_signal)
 # add wait handler that handles wait signal by setting self.continue = True in init and replace both while True:
 # with while self.continue
 # wait handler will self.interrupt() and then self.continue to false
-
-# add waiting for snapshot to be available before restarting processes?
-#
 
 node.run()
 

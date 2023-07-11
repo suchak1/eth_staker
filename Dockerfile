@@ -5,9 +5,11 @@ FROM ubuntu:23.04
 ARG DEPLOY_ENV
 ARG VERSION
 ARG ARCH
+ARG VPN
 ENV DEPLOY_ENV "${DEPLOY_ENV:-prod}"
 ENV VERSION "${VERSION}"
 ENV ARCH "${ARCH:-arm64}"
+ENV VPN "${VPN:-false}"
 
 ENV ETH_DIR "${HOME}/ethereum"
 ENV EXEC_DIR "${ETH_DIR}/execution"
@@ -65,36 +67,40 @@ WORKDIR "${EXTRA_DIR}"
 
 COPY ".${EXTRA_DIR_BASE}/prometheus.yml" .
 
-ENV MEV_VERSION 1.5.1-alpha1
+ENV MEV_VERSION 1.6
 ENV MEV_ARCHIVE "mev-boost_${MEV_VERSION}_linux_${ARCH}"
 
-ENV PROM_VERSION 2.44.0-rc.2
-ENV PROM_ARCHIVE "prometheus-${PROM_VERSION}.${PLATFORM_ARCH}"
+# ENV PROM_VERSION 2.44.0-rc.2
+# ENV PROM_ARCHIVE "prometheus-${PROM_VERSION}.${PLATFORM_ARCH}"
 
-ENV NODE_VERSION 1.5.0
-ENV NODE_ARCHIVE "node_exporter-${NODE_VERSION}.${PLATFORM_ARCH}"
+# ENV NODE_VERSION 1.5.0
+# ENV NODE_ARCHIVE "node_exporter-${NODE_VERSION}.${PLATFORM_ARCH}"
 
 ENV BEACONCHAIN_VERSION 0.1.0
 
 RUN curl -LO "https://github.com/flashbots/mev-boost/releases/download/v${MEV_VERSION}/${MEV_ARCHIVE}.tar.gz"
-RUN curl -LO "https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/${PROM_ARCHIVE}.tar.gz"
-RUN curl -LO "https://github.com/prometheus/node_exporter/releases/download/v${NODE_VERSION}/${NODE_ARCHIVE}.tar.gz"
-RUN curl -Lo eth2-client-metrics-exporter "https://github.com/gobitfly/eth2-client-metrics-exporter/releases/download/${BEACONCHAIN_VERSION}/eth2-client-metrics-exporter-${PLATFORM_ARCH}"
+# RUN curl -LO "https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/${PROM_ARCHIVE}.tar.gz"
+# RUN curl -LO "https://github.com/prometheus/node_exporter/releases/download/v${NODE_VERSION}/${NODE_ARCHIVE}.tar.gz"
+# RUN curl -Lo eth2-client-metrics-exporter "https://github.com/gobitfly/eth2-client-metrics-exporter/releases/download/${BEACONCHAIN_VERSION}/eth2-client-metrics-exporter-${PLATFORM_ARCH}"
 
 RUN tar -xvzf "${MEV_ARCHIVE}.tar.gz"
-RUN tar -xvzf "${PROM_ARCHIVE}.tar.gz"
-RUN tar -xvzf "${NODE_ARCHIVE}.tar.gz"
+# RUN tar -xvzf "${PROM_ARCHIVE}.tar.gz"
+# RUN tar -xvzf "${NODE_ARCHIVE}.tar.gz"
 
-# mev-boost archive doesn't have internal folder
-# RUN mv "${MEV_ARCHIVE}/mev-boost" . && rm -rf "${MEV_ARCHIVE}"
-RUN mv "${PROM_ARCHIVE}/prometheus" . && rm -rf "${PROM_ARCHIVE}"
-RUN mv "${NODE_ARCHIVE}/node_exporter" . && rm -rf "${NODE_ARCHIVE}"
+# RUN mv "${PROM_ARCHIVE}/prometheus" . && rm -rf "${PROM_ARCHIVE}"
+# RUN mv "${NODE_ARCHIVE}/node_exporter" . && rm -rf "${NODE_ARCHIVE}"
 
-RUN chmod +x mev-boost prometheus node_exporter eth2-client-metrics-exporter
+RUN chmod +x mev-boost 
+# prometheus node_exporter eth2-client-metrics-exporter
+
 # Add extra to path
 ENV PATH "${PATH}:${EXTRA_DIR}"
 
 # Run app
 WORKDIR "${ETH_DIR}"
+COPY "scripts/vpn.sh" .
+RUN bash vpn.sh
+
 COPY Staker.py Backup.py Constants.py MEV.py ./
+EXPOSE 30303/tcp 30303/udp 13000/tcp 12000/udp
 ENTRYPOINT ["python3", "Staker.py"]
