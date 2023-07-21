@@ -77,7 +77,8 @@ class Node:
             f'--execution-endpoint={self.ipc_path}',
 
             # alternatively http://127.0.0.1:18550
-            '--http-mev-relay=http://localhost:18550'
+            '--http-mev-relay=http://localhost:18550',
+            '--aggregate-parallel'
         ]
 
         prysm_dir = './consensus/prysm'
