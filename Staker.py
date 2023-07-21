@@ -172,12 +172,12 @@ class Node:
 
     def start(self):
         processes = []
-        if not AWS:
-            processes.append({
-                    'process': self.vpn(),
-                    'prefix': 'xxx OPENVPN__ xxx'
-            })
-            sleep(15)
+        # if not AWS:
+        #     processes.append({
+        #             'process': self.vpn(),
+        #             'prefix': 'xxx OPENVPN__ xxx'
+        #     })
+        #     sleep(15)
         processes += [
             {
                 'process': self.execution(),
