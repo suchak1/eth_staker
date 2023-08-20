@@ -244,16 +244,23 @@ class Node:
             print(log)
             with open(self.logs_file, 'a') as file:
                 file.write(f'{log}\n')
+            return log
 
     def stream_logs(self, rstreams):
-        for stream in rstreams:
-            self.print_line(stream.prefix, stream.readline())
+        return [self.print_line(stream.prefix, stream.readline()) for stream in rstreams]
+            
 
     def squeeze_logs(self, processes):
         for meta in processes:
             stream = meta['process'].stdout
             for line in iter(stream.readline, b''):
                 self.print_line(stream.prefix, line)
+
+    def interrupt_on_error(self, logs):
+        for log in logs:
+            if log and 'Beacon backfilling failed' in log:
+                self.interrupt(hard=False)
+                return True
 
     def poll_processes(self, processes):
         return (meta['process'].poll() is not None for meta in processes)
@@ -288,8 +295,10 @@ class Node:
                     print('Pausing node to initiate snapshot.')
                     self.interrupt(hard=False)
                     sent_interrupt = True
+
                 # Stream output
-                self.stream_logs(rstreams)
+                logs = self.stream_logs(rstreams)
+                self.interrupt_on_error(logs)
                 if self.any_process_is_dead(processes):
                     break
 
