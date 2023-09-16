@@ -50,7 +50,7 @@ class Node:
 
     def execution(self):
         args = [
-            '--http', '--http.api', 'eth,net,engine,admin'
+            '--http', '--http.api', 'eth,net,engine,admin', '--state.scheme=path',
             # metrics flags
             # '--metrics', '--pprof',
             # '--metrics.expensive',
