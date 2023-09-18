@@ -3,6 +3,7 @@ import sys
 import select
 import signal
 import logging
+import requests
 from time import sleep
 import subprocess
 from glob import glob
@@ -93,7 +94,7 @@ class Node:
                 f"--datadir={self.prysm_data_dir}",
                 # f"--p2p-max-peers={MAX_PEERS}"
             ]
-        
+
         if AWS:
             args += [f"--p2p-host-dns={'dev.' if DEV else ''}eth.forcepu.sh"]
 
@@ -165,18 +166,24 @@ class Node:
         IVACY_PASS = os.environ['IVACY_PASS']
         with open('vpn_creds.txt', 'w') as file:
             file.write(f'{IVACY_USER}\n{IVACY_PASS}')
-        args = ['--config', 'config/US_Miami_TCP.ovpn', '--auth-user-pass', 'vpn_creds.txt']
+        args = ['--config', 'config/US_Miami_TCP.ovpn',
+                '--auth-user-pass', 'vpn_creds.txt']
         cmd = ['openvpn'] + args
         return self.run_cmd(cmd)
 
     def start(self):
         processes = []
         if not AWS:
+            def get_ip():
+                return requests.get('https://4.ident.me').text
+            start_ip = get_ip()
             processes.append({
-                    'process': self.vpn(),
-                    'prefix': 'xxx OPENVPN__ xxx'
+                'process': self.vpn(),
+                'prefix': 'xxx OPENVPN__ xxx'
             })
-            sleep(15)
+            while start_ip == get_ip():
+                print('Waiting for VPN...')
+                sleep(3)
         processes += [
             {
                 'process': self.execution(),
@@ -207,7 +214,7 @@ class Node:
             #     'prefix': '____BEACONCHA.IN_'
             # }
         ]
-        
+
         streams = []
         # Label processes with log prefix
         for meta in processes:
@@ -247,7 +254,6 @@ class Node:
 
     def stream_logs(self, rstreams):
         return [self.print_line(stream.prefix, stream.readline()) for stream in rstreams]
-            
 
     def squeeze_logs(self, processes):
         for meta in processes:
