@@ -4,7 +4,7 @@ import select
 import signal
 import logging
 import requests
-from time import sleep
+from time import time, sleep
 import subprocess
 from glob import glob
 from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR, MAX_PEERS, DOCKER
@@ -276,6 +276,19 @@ class Node:
     def any_process_is_dead(self, processes):
         return any(self.poll_processes(processes))
 
+    def handle_gracefully(self, processes, hard):
+        def wait_for_exit():
+            start = time()
+            while not self.all_processes_are_dead(processes) and time() - start < KILL_TIME:
+                sleep(1)
+            return self.all_processes_are_dead(processes)
+        if not wait_for_exit():
+            self.terminate(hard=hard)
+        if not wait_for_exit():
+            self.kill(hard=hard)
+        # Log rest of output
+        self.squeeze_logs(self.processes)
+
     def run(self):
         if AWS:
             terminate = self.snapshot.update()
@@ -307,21 +320,11 @@ class Node:
                 if self.any_process_is_dead(processes):
                     break
 
-            sleep(KILL_TIME)
-            self.terminate(hard=False)
-            sleep(KILL_TIME)
-            self.kill(hard=False)
-            # Log rest of output
-            self.squeeze_logs(processes)
+            self.handle_gracefully(self.processes, hard=False)
 
     def stop(self):
         self.kill_in_progress = True
-        self.interrupt()
-        sleep(KILL_TIME)
-        self.terminate()
-        sleep(KILL_TIME)
-        self.kill()
-        self.squeeze_logs(self.processes)
+        self.handle_gracefully(self.processes, hard=True)
         print('Node stopped')
         if AWS and self.snapshot.instance_is_draining() and not self.terminating:
             self.snapshot.force_create()
