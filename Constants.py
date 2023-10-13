@@ -16,6 +16,7 @@ def get_env_bool(var_name):
 
 AWS = get_env_bool('AWS')
 DOCKER = get_env_bool('DOCKER')
+VPN = get_env_bool('VPN')
 
 MAX_SNAPSHOTS = 3
 SNAPSHOT_DAYS = 30

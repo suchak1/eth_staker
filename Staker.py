@@ -7,7 +7,7 @@ import requests
 from time import time, sleep
 import subprocess
 from glob import glob
-from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR, MAX_PEERS, DOCKER
+from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR, DOCKER, VPN
 from Backup import Snapshot
 from MEV import Booster
 
@@ -173,7 +173,7 @@ class Node:
 
     def start(self):
         processes = []
-        if not AWS:
+        if VPN:
             def get_ip():
                 return requests.get('https://4.ident.me').text
             start_ip = get_ip()
