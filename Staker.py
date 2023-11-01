@@ -104,8 +104,6 @@ class Node:
             f'--checkpoint-state={state_filename}',
             f'--checkpoint-block={block_filename}',
             f'--suggested-fee-recipient={ETH_ADDR}',
-            '--enable-eip-4881',
-            '--enable-experimental-state'
         ]
         cmd = ['beacon-chain'] + args
         return self.run_cmd(cmd)
