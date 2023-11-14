@@ -32,7 +32,7 @@ RUN python3 -m pip install boto3 requests
 RUN mkdir -p "${EXEC_DIR}"
 WORKDIR "${EXEC_DIR}"
 ENV PLATFORM_ARCH "linux-${ARCH}"
-ENV GETH_VERSION 1.13.4-3f907d6a
+ENV GETH_VERSION 1.13.5-916d6a44
 ENV GETH_ARCHIVE "geth-${PLATFORM_ARCH}-${GETH_VERSION}"
 RUN curl -LO "https://gethstore.blob.core.windows.net/builds/${GETH_ARCHIVE}.tar.gz"
 RUN tar -xvzf "${GETH_ARCHIVE}.tar.gz"
