@@ -4,7 +4,7 @@ set -eu
 source config.env
 
 
-VPN="${VPN:-true}"
+VPN="${VPN:-false}"
 
 docker run \
     --env ETH_ADDR="${ETH_ADDR}" \
