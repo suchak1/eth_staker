@@ -45,7 +45,7 @@ ENV PATH "${PATH}:${EXEC_DIR}"
 # Download prysm (consensus)
 RUN mkdir -p "${PRYSM_DIR}"
 WORKDIR "${PRYSM_DIR}"
-ENV PRYSM_VERSION v5.0.0
+ENV PRYSM_VERSION v5.0.2
 RUN if [ "$ARCH" = "amd64" ]; \
     then export PRYSM_PLATFORM_ARCH="modern-${PLATFORM_ARCH}"; \
     else export PRYSM_PLATFORM_ARCH="${PLATFORM_ARCH}"; \
