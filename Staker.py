@@ -265,8 +265,8 @@ class Node:
         line = line.decode('UTF-8').strip()
         if line:
             log = f'{prefix} {line}'
-            log = self.color(log)
-            print(log)
+            colored = self.color(log)
+            print(colored)
             with open(self.logs_file, 'a') as file:
                 file.write(f'{log}\n')
             return log
