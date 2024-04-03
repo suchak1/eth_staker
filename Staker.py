@@ -6,7 +6,7 @@ import logging
 import requests
 from time import time, sleep
 import subprocess
-# from rich import print
+from rich import print
 from glob import glob
 from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR, DOCKER, VPN
 from Backup import Snapshot
@@ -265,7 +265,7 @@ class Node:
         line = line.decode('UTF-8').strip()
         if line:
             log = f'{prefix} {line}'
-            # log = self.color(log)
+            log = self.color(log)
             print(log)
             with open(self.logs_file, 'a') as file:
                 file.write(f'{log}\n')

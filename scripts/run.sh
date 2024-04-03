@@ -24,4 +24,5 @@ docker run \
     --dns 8.8.8.8 \
     --name ethereum \
     --rm \
+    -t \
     ethereum
