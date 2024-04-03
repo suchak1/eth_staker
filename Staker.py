@@ -6,7 +6,7 @@ import logging
 import requests
 from time import time, sleep
 import subprocess
-from rich import print
+from rich.console import Console
 from glob import glob
 from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR, DOCKER, VPN
 from Backup import Snapshot
@@ -14,7 +14,8 @@ from MEV import Booster
 
 home_dir = os.path.expanduser("~")
 platform = sys.platform.lower()
-
+console = Console(highlight=False)
+print = console.print
 
 class Node:
     def __init__(self):
