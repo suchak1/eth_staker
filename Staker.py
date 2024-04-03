@@ -6,6 +6,7 @@ import logging
 import requests
 from time import time, sleep
 import subprocess
+# from rich import print
 from glob import glob
 from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR, DOCKER, VPN
 from Backup import Snapshot
@@ -242,11 +243,29 @@ class Node:
 
     def kill(self, **kwargs):
         self.signal_processes(signal.SIGKILL, 'Killing', **kwargs)
+    
+    def color(self, text):
+        styles = {
+            'EXECUTION': 'bold magenta',
+            'CONSENSUS': 'bold cyan',
+            'VALIDATION': 'bold yellow',
+            'MEV_BOOST': 'bold green',
+            'INFO': 'green',
+            'WARN': 'bright_yellow',
+            'ERROR': 'bright_red',
+            'level=info': 'green',
+            'level=warning': 'bright_yellow',
+            'level=error': 'bright_red'
+        }
+        for key, style in styles.items():
+            text = text.replace(key, f'[{style}]{key}[/{style}]')
+        return text
 
     def print_line(self, prefix, line):
         line = line.decode('UTF-8').strip()
         if line:
-            log = f"{prefix} {line}"
+            log = f'{prefix} {line}'
+            # log = self.color(log)
             print(log)
             with open(self.logs_file, 'a') as file:
                 file.write(f'{log}\n')

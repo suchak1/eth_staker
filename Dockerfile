@@ -26,7 +26,7 @@ RUN apt-get update && \
 RUN python3 -m venv "${ETH_DIR}" --without-pip --system-site-packages
 # Use virtual env as default python path
 ENV PATH "${ETH_DIR}/bin:${PATH}"
-RUN python3 -m pip install boto3 requests
+RUN python3 -m pip install boto3 requests rich
 
 # # Download geth (execution)
 RUN mkdir -p "${EXEC_DIR}"
