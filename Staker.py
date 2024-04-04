@@ -17,6 +17,7 @@ platform = sys.platform.lower()
 console = Console(highlight=False)
 print = console.print
 
+
 class Node:
     def __init__(self):
         on_mac = platform == 'darwin'
@@ -244,7 +245,7 @@ class Node:
 
     def kill(self, **kwargs):
         self.signal_processes(signal.SIGKILL, 'Killing', **kwargs)
-    
+
     def color(self, text):
         styles = {
             'EXECUTION': 'bold magenta',
