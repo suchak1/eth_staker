@@ -15,9 +15,9 @@ DEPLOY_ENV="${DEPLOY_ENV:-prod}"
 
 if [[ "${DEPLOY_ENV}" = "dev" ]]
 then
-    NODE_HOST="https://goerli.beaconstate.ethstaker.cc"
+    NODE_HOST="https://sync-goerli.beaconcha.in"
 else
-    NODE_HOST="https://beaconstate.ethstaker.cc"
+    NODE_HOST="https://sync-mainnet.beaconcha.in"
 fi
 
 ./prysmctl checkpoint-sync download --beacon-node-host="${NODE_HOST}"
