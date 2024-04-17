@@ -14,7 +14,7 @@ from MEV import Booster
 
 home_dir = os.path.expanduser("~")
 platform = sys.platform.lower()
-console = Console(highlight=False, soft_wrap=False)
+console = Console(highlight=False)
 print = console.print
 
 
