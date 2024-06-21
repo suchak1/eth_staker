@@ -25,7 +25,7 @@ class Node:
         geth_dir_base = f"/{'Library/Ethereum' if on_mac else '.ethereum'}"
         prysm_dir_base = f"/{'Library/Eth2' if on_mac else '.eth2'}"
         prysm_wallet_postfix = f"{'V' if on_mac else 'v'}alidators/prysm-wallet-v2"
-        geth_dir_postfix = '/goerli' if DEV else ''
+        geth_dir_postfix = '/holesky' if DEV else ''
 
         self.geth_data_dir = f"{prefix}{geth_dir_base}{geth_dir_postfix}"
         self.prysm_data_dir = f"{prefix}{prysm_dir_base}"
@@ -61,7 +61,7 @@ class Node:
         ]
 
         if DEV:
-            args.append("--goerli")
+            args.append("--holesky")
         else:
             args.append("--mainnet")
 
@@ -87,7 +87,7 @@ class Node:
         prysm_dir = './consensus/prysm'
 
         if DEV:
-            args.append("--prater")
+            args.append("--holesky")
             args.append(f"--genesis-state={prysm_dir}/genesis.ssz")
         else:
             args.append('--mainnet')
@@ -123,7 +123,7 @@ class Node:
         ]
 
         if DEV:
-            args.append("--prater")
+            args.append("--holesky")
         else:
             args.append('--mainnet')
 
@@ -133,7 +133,7 @@ class Node:
     def mev(self):
         args = ['-relay-check']
         if DEV:
-            args.append("-goerli")
+            args.append("-holesky")
         else:
             args.append('-mainnet')
 
@@ -382,7 +382,7 @@ node.run()
 # - data integrity protection
 #   - shutdown / terminate instance if process fails and others continue => forces new vol from last snapshot
 #       - perhaps implement counter so if 3 process failures in a row, terminate instance
-#   - use `geth --exec '(eth?.syncing?.currentBlock/eth?.syncing?.highestBlock)*100' attach --datadir /mnt/ebs/.ethereum/goerli`
+#   - use `geth --exec '(eth?.syncing?.currentBlock/eth?.syncing?.highestBlock)*100' attach --datadir /mnt/ebs/.ethereum/holesky`
 #       - will yield NaN if already synced or 68.512213 if syncing
 # - enable swap space if need more memory w 4vCPUs
 #   - disabled on host by default for ecs optimized amis

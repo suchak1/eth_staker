@@ -2,9 +2,9 @@
 
 set -eu
 
-# Goerli hosts
-# https://goerli.beaconstate.ethstaker.cc
-# https://sync-goerli.beaconcha.in
+# Holesky hosts
+# https://holesky.beaconstate.ethstaker.cc
+# https://sync-holesky.beaconcha.in
 
 # Mainnet hosts
 # https://beaconstate.ethstaker.cc
@@ -16,6 +16,7 @@ DEPLOY_ENV="${DEPLOY_ENV:-prod}"
 if [[ "${DEPLOY_ENV}" = "dev" ]]
 then
     NODE_HOST="https://sync-holesky.beaconcha.in"
+    curl -LO https://github.com/eth-clients/holesky/raw/main/metadata/genesis.ssz
 else
     NODE_HOST="https://sync-mainnet.beaconcha.in"
 fi

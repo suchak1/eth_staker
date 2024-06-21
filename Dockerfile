@@ -62,8 +62,6 @@ ENV PATH "${PATH}:${PRYSM_DIR}"
 
 # Download consensus snapshot
 COPY ".${PRYSM_DIR_BASE}/download_checkpoint.sh" .
-# Genesis block for goerli testnet
-COPY ".${PRYSM_DIR_BASE}/genesis.ssz" .
 RUN bash download_checkpoint.sh
 
 # Download mev-boost and monitoring deps (extra)
