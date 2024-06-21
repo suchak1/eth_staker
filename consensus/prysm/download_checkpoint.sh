@@ -15,7 +15,7 @@ DEPLOY_ENV="${DEPLOY_ENV:-prod}"
 
 if [[ "${DEPLOY_ENV}" = "dev" ]]
 then
-    NODE_HOST="https://sync-goerli.beaconcha.in"
+    NODE_HOST="https://sync-holesky.beaconcha.in"
 else
     NODE_HOST="https://sync-mainnet.beaconcha.in"
 fi
