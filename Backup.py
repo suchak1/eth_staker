@@ -139,9 +139,9 @@ class Snapshot:
 
     def update(self):
         curr_snapshots = self.get_snapshots()
-        most_recent = self.find_most_recent(curr_snapshots)
-        recent_snapshot_id = most_recent['SnapshotId']
-        if self.get_param() != recent_snapshot_id:
+        most_recent = self.find_most_recent(curr_snapshots) or {}
+        recent_snapshot_id = most_recent.get('SnapshotId')
+        if recent_snapshot_id and self.get_param() != recent_snapshot_id:
             self.put_param(recent_snapshot_id)
         template_name = f'{DEPLOY_ENV}_launch_template'
         launch_template = self.ec2.describe_launch_template_versions(
@@ -149,10 +149,10 @@ class Snapshot:
         for device in launch_template['LaunchTemplateData']['BlockDeviceMappings']:
             if device['DeviceName'] == '/dev/sdx':
                 vol = device
-                curr_snapshot_id = device['Ebs']['SnapshotId']
+                curr_snapshot_id = device['Ebs'].get('SnapshotId')
                 break
         template_version = str(launch_template['VersionNumber'])
-        if curr_snapshot_id != recent_snapshot_id:
+        if recent_snapshot_id and curr_snapshot_id != recent_snapshot_id:
             vol['Ebs']['SnapshotId'] = recent_snapshot_id
             template_version = str(self.ec2.create_launch_template_version(
                 LaunchTemplateName=template_name, SourceVersion=template_version, LaunchTemplateData={'BlockDeviceMappings': [vol]})['LaunchTemplateVersion']['VersionNumber'])
