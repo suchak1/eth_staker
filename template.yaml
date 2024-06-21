@@ -18,7 +18,7 @@ Parameters:
     Default: 22
   DesiredCapacity:
     Type: "Number"
-    Default: 0
+    Default: 1
   Arch:
     Type: "String"
     Default: arm64
