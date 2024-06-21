@@ -50,16 +50,16 @@ Conditions:
     !Equals [!Ref DeployEnv, prod]
 
 Resources:
-  # EIPDNSRecord:
-  #   DependsOn: ElasticIP
-  #   Type: AWS::Route53::RecordSet
-  #   Properties: 
-  #     HostedZoneId: !Ref HostedZoneId
-  #     Name: !Join [ "", [!If [IsProd, "", "dev."], eth.forcepu.sh ] ]
-  #     ResourceRecords: 
-  #       - !GetAtt ElasticIP.PublicIp
-  #     TTL: 172800
-  #     Type: A
+  EIPDNSRecord:
+    DependsOn: ElasticIP
+    Type: AWS::Route53::RecordSet
+    Properties: 
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Join [ "", [!If [IsProd, "", "dev."], eth.forcepu.sh ] ]
+      ResourceRecords: 
+        - !GetAtt ElasticIP.PublicIp
+      TTL: 172800
+      Type: A
   InstanceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -111,11 +111,11 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
       RoleName: !Sub "${DeployEnv}StakingExecutionRole"
-  # ElasticIP:
-  #   Type: AWS::EC2::EIP
-  #   Properties: 
-  #     Domain: vpc
-  #     NetworkBorderGroup: !Ref AWS::Region
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties: 
+      Domain: vpc
+      NetworkBorderGroup: !Ref AWS::Region
   InstanceProfile:
     DependsOn: InstanceRole
     Type: AWS::IAM::InstanceProfile
@@ -322,7 +322,7 @@ Resources:
     DependsOn: 
       - SecurityGroup
       - InstanceProfile
-      # - ElasticIP
+      - ElasticIP
     Type: AWS::EC2::LaunchTemplate
     Properties: 
       LaunchTemplateData:
