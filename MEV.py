@@ -1,7 +1,7 @@
 import requests
 from time import time, sleep
 from statistics import mean, stdev
-from Constants import RELAYS
+from Constants import RELAYS, AWS
 
 
 class Booster:
@@ -25,6 +25,9 @@ class Booster:
             del relays[relay]
 
         ping_times = [v for _, v in relays.items()]
+        if len(ping_times) < 2:
+            print('Error in relay testing. Defaulting to using all specified relays.')
+            return RELAYS
         dev = stdev(ping_times)
         avg = mean(ping_times)
 

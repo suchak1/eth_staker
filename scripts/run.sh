@@ -3,6 +3,9 @@
 set -eu
 source config.env
 
+
+VPN="${VPN:-false}"
+
 docker run \
     --env ETH_ADDR="${ETH_ADDR}" \
     --env BEACONCHAIN_KEY="" \
@@ -10,6 +13,7 @@ docker run \
     --env DOCKER=true \
     --env IVACY_USER="${IVACY_USER}" \
     --env IVACY_PASS="${IVACY_PASS}" \
+    --env VPN="${VPN}" \
     --cap-add=NET_ADMIN \
     --device=/dev/net/tun \
     -p 30303:30303/tcp \
@@ -20,4 +24,5 @@ docker run \
     --dns 8.8.8.8 \
     --name ethereum \
     --rm \
-    ethereum
+    --tty \
+  ethereum

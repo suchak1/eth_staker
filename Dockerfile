@@ -26,13 +26,13 @@ RUN apt-get update && \
 RUN python3 -m venv "${ETH_DIR}" --without-pip --system-site-packages
 # Use virtual env as default python path
 ENV PATH "${ETH_DIR}/bin:${PATH}"
-RUN python3 -m pip install boto3 requests
+RUN python3 -m pip install boto3 requests rich
 
 # # Download geth (execution)
 RUN mkdir -p "${EXEC_DIR}"
 WORKDIR "${EXEC_DIR}"
 ENV PLATFORM_ARCH "linux-${ARCH}"
-ENV GETH_VERSION 1.12.0-e501b3b0
+ENV GETH_VERSION 1.14.5-0dd173a7
 ENV GETH_ARCHIVE "geth-${PLATFORM_ARCH}-${GETH_VERSION}"
 RUN curl -LO "https://gethstore.blob.core.windows.net/builds/${GETH_ARCHIVE}.tar.gz"
 RUN tar -xvzf "${GETH_ARCHIVE}.tar.gz"
@@ -45,11 +45,16 @@ ENV PATH "${PATH}:${EXEC_DIR}"
 # Download prysm (consensus)
 RUN mkdir -p "${PRYSM_DIR}"
 WORKDIR "${PRYSM_DIR}"
-ENV PRYSM_VERSION v4.0.6
-RUN curl -Lo beacon-chain "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/beacon-chain-${PRYSM_VERSION}-${PLATFORM_ARCH}"
-RUN curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/validator-${PRYSM_VERSION}-${PLATFORM_ARCH}"
-RUN curl -Lo prysmctl "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/prysmctl-${PRYSM_VERSION}-${PLATFORM_ARCH}"
-RUN curl -Lo client-stats "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/client-stats-${PRYSM_VERSION}-${PLATFORM_ARCH}"
+ENV PRYSM_VERSION v5.0.4
+RUN if [ "$ARCH" = "amd64" ]; \
+    then export PRYSM_PLATFORM_ARCH="modern-${PLATFORM_ARCH}"; \
+    else export PRYSM_PLATFORM_ARCH="${PLATFORM_ARCH}"; \
+    fi; \
+    echo $PRYSM_PLATFORM_ARCH; \
+    curl -Lo beacon-chain "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/beacon-chain-${PRYSM_VERSION}-${PRYSM_PLATFORM_ARCH}"; \
+    curl -Lo validator "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/validator-${PRYSM_VERSION}-${PLATFORM_ARCH}"; \
+    curl -Lo prysmctl "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/prysmctl-${PRYSM_VERSION}-${PLATFORM_ARCH}"; \
+    curl -Lo client-stats "https://github.com/prysmaticlabs/prysm/releases/download/${PRYSM_VERSION}/client-stats-${PRYSM_VERSION}-${PLATFORM_ARCH}";
 
 RUN chmod +x beacon-chain validator prysmctl client-stats
 # Add prysm to path
@@ -57,8 +62,6 @@ ENV PATH "${PATH}:${PRYSM_DIR}"
 
 # Download consensus snapshot
 COPY ".${PRYSM_DIR_BASE}/download_checkpoint.sh" .
-# Genesis block for goerli testnet
-COPY ".${PRYSM_DIR_BASE}/genesis.ssz" .
 RUN bash download_checkpoint.sh
 
 # Download mev-boost and monitoring deps (extra)
@@ -67,7 +70,7 @@ WORKDIR "${EXTRA_DIR}"
 
 COPY ".${EXTRA_DIR_BASE}/prometheus.yml" .
 
-ENV MEV_VERSION 1.6
+ENV MEV_VERSION 1.7
 ENV MEV_ARCHIVE "mev-boost_${MEV_VERSION}_linux_${ARCH}"
 
 # ENV PROM_VERSION 2.44.0-rc.2

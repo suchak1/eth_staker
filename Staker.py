@@ -3,15 +3,19 @@ import sys
 import select
 import signal
 import logging
-from time import sleep
+import requests
+from time import time, sleep
 import subprocess
+from rich.console import Console
 from glob import glob
-from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR, MAX_PEERS, DOCKER
+from Constants import DEPLOY_ENV, AWS, SNAPSHOT_DAYS, DEV, BEACONCHAIN_KEY, KILL_TIME, ETH_ADDR, DOCKER, VPN
 from Backup import Snapshot
 from MEV import Booster
 
 home_dir = os.path.expanduser("~")
 platform = sys.platform.lower()
+console = Console(highlight=False)
+print = console.print
 
 
 class Node:
@@ -21,7 +25,7 @@ class Node:
         geth_dir_base = f"/{'Library/Ethereum' if on_mac else '.ethereum'}"
         prysm_dir_base = f"/{'Library/Eth2' if on_mac else '.eth2'}"
         prysm_wallet_postfix = f"{'V' if on_mac else 'v'}alidators/prysm-wallet-v2"
-        geth_dir_postfix = '/goerli' if DEV else ''
+        geth_dir_postfix = '/holesky' if DEV else ''
 
         self.geth_data_dir = f"{prefix}{geth_dir_base}{geth_dir_postfix}"
         self.prysm_data_dir = f"{prefix}{prysm_dir_base}"
@@ -50,14 +54,14 @@ class Node:
 
     def execution(self):
         args = [
-            '--http', '--http.api', 'eth,net,engine,admin'
+            '--http', '--http.api', 'eth,net,engine,admin', '--state.scheme=path',
             # metrics flags
             # '--metrics', '--pprof',
             # '--metrics.expensive',
         ]
 
         if DEV:
-            args.append("--goerli")
+            args.append("--holesky")
         else:
             args.append("--mainnet")
 
@@ -77,13 +81,13 @@ class Node:
             f'--execution-endpoint={self.ipc_path}',
 
             # alternatively http://127.0.0.1:18550
-            '--http-mev-relay=http://localhost:18550'
+            '--http-mev-relay=http://localhost:18550',
         ]
 
         prysm_dir = './consensus/prysm'
 
         if DEV:
-            args.append("--prater")
+            args.append("--holesky")
             args.append(f"--genesis-state={prysm_dir}/genesis.ssz")
         else:
             args.append('--mainnet')
@@ -93,7 +97,7 @@ class Node:
                 f"--datadir={self.prysm_data_dir}",
                 # f"--p2p-max-peers={MAX_PEERS}"
             ]
-        
+
         if AWS:
             args += [f"--p2p-host-dns={'dev.' if DEV else ''}eth.forcepu.sh"]
 
@@ -102,7 +106,7 @@ class Node:
         args += [
             f'--checkpoint-state={state_filename}',
             f'--checkpoint-block={block_filename}',
-            f'--suggested-fee-recipient={ETH_ADDR}'
+            f'--suggested-fee-recipient={ETH_ADDR}',
         ]
         cmd = ['beacon-chain'] + args
         return self.run_cmd(cmd)
@@ -119,7 +123,7 @@ class Node:
         ]
 
         if DEV:
-            args.append("--prater")
+            args.append("--holesky")
         else:
             args.append('--mainnet')
 
@@ -129,7 +133,7 @@ class Node:
     def mev(self):
         args = ['-relay-check']
         if DEV:
-            args.append("-goerli")
+            args.append("-holesky")
         else:
             args.append('-mainnet')
 
@@ -165,18 +169,24 @@ class Node:
         IVACY_PASS = os.environ['IVACY_PASS']
         with open('vpn_creds.txt', 'w') as file:
             file.write(f'{IVACY_USER}\n{IVACY_PASS}')
-        args = ['--config', 'config/US_Miami_TCP.ovpn', '--auth-user-pass', 'vpn_creds.txt']
+        args = ['--config', 'config/US_Miami_TCP.ovpn',
+                '--auth-user-pass', 'vpn_creds.txt']
         cmd = ['openvpn'] + args
         return self.run_cmd(cmd)
 
     def start(self):
         processes = []
-        if not AWS:
+        if VPN:
+            def get_ip():
+                return requests.get('https://4.ident.me').text
+            start_ip = get_ip()
             processes.append({
-                    'process': self.vpn(),
-                    'prefix': 'xxx OPENVPN__ xxx'
+                'process': self.vpn(),
+                'prefix': 'xxx OPENVPN__ xxx'
             })
-            sleep(15)
+            while start_ip == get_ip():
+                print('Waiting for VPN...')
+                sleep(3)
         processes += [
             {
                 'process': self.execution(),
@@ -186,10 +196,10 @@ class Node:
                 'process': self.consensus(),
                 'prefix': "[[[ CONSENSUS ]]]"
             },
-            {
-                'process': self.validation(),
-                'prefix': '(( _VALIDATION ))'
-            },
+            # {
+            #     'process': self.validation(),
+            #     'prefix': '(( _VALIDATION ))'
+            # },
             {
                 'process': self.mev(),
                 'prefix': "+++ MEV_BOOST +++"
@@ -207,7 +217,7 @@ class Node:
             #     'prefix': '____BEACONCHA.IN_'
             # }
         ]
-        
+
         streams = []
         # Label processes with log prefix
         for meta in processes:
@@ -236,23 +246,47 @@ class Node:
     def kill(self, **kwargs):
         self.signal_processes(signal.SIGKILL, 'Killing', **kwargs)
 
+    def color(self, text):
+        styles = {
+            'EXECUTION': 'bold magenta',
+            'CONSENSUS': 'bold cyan',
+            'VALIDATION': 'bold yellow',
+            'MEV_BOOST': 'bold green',
+            'INFO': 'green',
+            'WARN': 'bright_yellow',
+            'ERROR': 'bright_red',
+            'level=info': 'green',
+            'level=warning': 'bright_yellow',
+            'level=error': 'bright_red'
+        }
+        for key, style in styles.items():
+            text = text.replace(key, f'[{style}]{key}[/{style}]')
+        return text
+
     def print_line(self, prefix, line):
         line = line.decode('UTF-8').strip()
         if line:
-            log = f"{prefix} {line}"
-            print(log)
+            log = f'{prefix} {line}'
+            colored = self.color(log)
+            print(colored)
             with open(self.logs_file, 'a') as file:
                 file.write(f'{log}\n')
+            return log
 
     def stream_logs(self, rstreams):
-        for stream in rstreams:
-            self.print_line(stream.prefix, stream.readline())
+        return [self.print_line(stream.prefix, stream.readline()) for stream in rstreams]
 
     def squeeze_logs(self, processes):
         for meta in processes:
             stream = meta['process'].stdout
             for line in iter(stream.readline, b''):
                 self.print_line(stream.prefix, line)
+
+    def interrupt_on_error(self, logs):
+        for log in logs:
+            if log and 'Beacon backfilling failed' in log:
+                self.interrupt(hard=False)
+                return True
 
     def poll_processes(self, processes):
         return (meta['process'].poll() is not None for meta in processes)
@@ -262,6 +296,19 @@ class Node:
 
     def any_process_is_dead(self, processes):
         return any(self.poll_processes(processes))
+
+    def handle_gracefully(self, processes, hard):
+        def wait_for_exit():
+            start = time()
+            while not self.all_processes_are_dead(processes) and time() - start < KILL_TIME:
+                sleep(1)
+            return self.all_processes_are_dead(processes)
+        if not wait_for_exit():
+            self.terminate(hard=hard)
+        if not wait_for_exit():
+            self.kill(hard=hard)
+        # Log rest of output
+        self.squeeze_logs(self.processes)
 
     def run(self):
         if AWS:
@@ -287,26 +334,18 @@ class Node:
                     print('Pausing node to initiate snapshot.')
                     self.interrupt(hard=False)
                     sent_interrupt = True
+
                 # Stream output
-                self.stream_logs(rstreams)
+                logs = self.stream_logs(rstreams)
+                self.interrupt_on_error(logs)
                 if self.any_process_is_dead(processes):
                     break
 
-            sleep(KILL_TIME)
-            self.terminate(hard=False)
-            sleep(KILL_TIME)
-            self.kill(hard=False)
-            # Log rest of output
-            self.squeeze_logs(processes)
+            self.handle_gracefully(self.processes, hard=False)
 
     def stop(self):
         self.kill_in_progress = True
-        self.interrupt()
-        sleep(KILL_TIME)
-        self.terminate()
-        sleep(KILL_TIME)
-        self.kill()
-        self.squeeze_logs(self.processes)
+        self.handle_gracefully(self.processes, hard=True)
         print('Node stopped')
         if AWS and self.snapshot.instance_is_draining() and not self.terminating:
             self.snapshot.force_create()
@@ -343,7 +382,7 @@ node.run()
 # - data integrity protection
 #   - shutdown / terminate instance if process fails and others continue => forces new vol from last snapshot
 #       - perhaps implement counter so if 3 process failures in a row, terminate instance
-#   - use `geth --exec '(eth?.syncing?.currentBlock/eth?.syncing?.highestBlock)*100' attach --datadir /mnt/ebs/.ethereum/goerli`
+#   - use `geth --exec '(eth?.syncing?.currentBlock/eth?.syncing?.highestBlock)*100' attach --datadir /mnt/ebs/.ethereum/holesky`
 #       - will yield NaN if already synced or 68.512213 if syncing
 # - enable swap space if need more memory w 4vCPUs
 #   - disabled on host by default for ecs optimized amis
