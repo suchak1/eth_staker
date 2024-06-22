@@ -268,7 +268,7 @@ class Node:
         if line:
             log = f'{prefix} {line}'
             colored = self.color(log)
-            print(colored)
+            print(log if AWS else colored)
             with open(self.logs_file, 'a') as file:
                 file.write(f'{log}\n')
             return log
