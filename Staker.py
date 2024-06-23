@@ -99,7 +99,7 @@ class Node:
             ]
 
         if AWS:
-            args += [f"--p2p-host-dns={'dev.' if DEV else ''}eth.forcepu.sh"]
+            args += [f"--p2p-host-dns=aws.{'dev.' if DEV else ''}eth.forcepu.sh"]
 
         state_filename = glob(f'{prysm_dir}/state*.ssz')[0]
         block_filename = glob(f'{prysm_dir}/block*.ssz')[0]
@@ -196,10 +196,10 @@ class Node:
                 'process': self.consensus(),
                 'prefix': "[[[ CONSENSUS ]]]"
             },
-            # {
-            #     'process': self.validation(),
-            #     'prefix': '(( _VALIDATION ))'
-            # },
+            {
+                'process': self.validation(),
+                'prefix': '(( _VALIDATION ))'
+            },
             {
                 'process': self.mev(),
                 'prefix': "+++ MEV_BOOST +++"
@@ -268,7 +268,7 @@ class Node:
         if line:
             log = f'{prefix} {line}'
             colored = self.color(log)
-            print(colored)
+            print(log if AWS else colored)
             with open(self.logs_file, 'a') as file:
                 file.write(f'{log}\n')
             return log

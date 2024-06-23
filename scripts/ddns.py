@@ -47,12 +47,3 @@ while True:
         update_ddns(ip)
 
     sleep(TTL)
-
-
-# Part 1 is Wake-on-LAN - TODO
-# Part 2 is DDNS (this file)
-# - all that's left is to create service that auto starts at startup
-# Part 3 is SSHD - TODO
-# open port on router
-# after being able to connect, disable password based auth - only key based auth allowed
-# ssh -p 12240 -o StrictHostKeyChecking=no -i ~/.ssh/dev_staking_keys_ec2.pem ec2-user@dev.eth.forcepu.sh

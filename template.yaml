@@ -55,7 +55,7 @@ Resources:
     Type: AWS::Route53::RecordSet
     Properties: 
       HostedZoneId: !Ref HostedZoneId
-      Name: !Join [ "", [!If [IsProd, "", "dev."], eth.forcepu.sh ] ]
+      Name: !Join [ "", [aws., !If [IsProd, "", "dev."], eth.forcepu.sh ] ]
       ResourceRecords: 
         - !GetAtt ElasticIP.PublicIp
       TTL: 172800
@@ -159,12 +159,6 @@ Resources:
                 Action:
                   - 'autoscaling:UpdateAutoScalingGroup'
                 Resource: !Sub 'arn:aws:autoscaling:${AWS::Region}:${AWS::AccountId}:autoScalingGroup:*:autoScalingGroupName/ECS_${DeployEnv}_staking_ASG'
-              # - Effect: Allow
-              #   Action: 
-              #     - 'ec2:CreateTags'
-              #     # prob describe tags
-              #     # maybe delete?
-              #   Resource: !Sub 'arn:aws:ec2:${AWS::Region}::snapshot/*'
               - Effect: Allow
                 Action: 
                   - 'ssm:PutParameter'
@@ -350,9 +344,6 @@ Resources:
         # This is Amazon Linux 2023 AMI for amd64
         ImageId: !If [UseAMD64, !Ref ECSOptimizedAMD64, !Ref ECSOptimizedARM64]
         InstanceInitiatedShutdownBehavior: terminate
-        # # use this to specify reqs instead of instance type
-        # InstanceRequirements: 
-        #   InstanceRequirements
         InstanceType: !Join [ "", ["x2", !If [UseAMD64, "", "gd"], ".",  !If [IsProd, "large", "medium"], ""] ]
         KeyName: !Sub "${DeployEnv}_staking_keys"
         MaintenanceOptions: 
