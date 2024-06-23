@@ -99,7 +99,7 @@ class Node:
             ]
 
         if AWS:
-            args += [f"--p2p-host-dns={'dev.' if DEV else ''}eth.forcepu.sh"]
+            args += [f"--p2p-host-dns=aws.{'dev.' if DEV else ''}eth.forcepu.sh"]
 
         state_filename = glob(f'{prysm_dir}/state*.ssz')[0]
         block_filename = glob(f'{prysm_dir}/block*.ssz')[0]
