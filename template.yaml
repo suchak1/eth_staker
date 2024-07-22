@@ -18,7 +18,7 @@ Parameters:
     Default: 22
   DesiredCapacity:
     Type: "Number"
-    Default: 1
+    Default: 0
   Arch:
     Type: "String"
     Default: arm64
@@ -332,7 +332,7 @@ Resources:
               # Iops: 10000
               # 10 - 15k is laptop/desktop SSD throughput
               # Throughput: 1000
-              # SnapshotId: !Sub '{{resolve:ssm:${DeployEnv}_staking_snapshot}}'
+              SnapshotId: !Sub '{{resolve:ssm:${DeployEnv}_staking_snapshot}}'
                 # Condition: 
               # try defining cf param as ssm param val or 'default' / pseudo AWS::NoValue
               # https://www.jforte.me/posts/create-ebs-volume-snapshot-condtions-aws-cdk/
