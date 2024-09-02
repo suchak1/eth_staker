@@ -32,7 +32,7 @@ RUN python3 -m pip install boto3 requests rich
 RUN mkdir -p "${EXEC_DIR}"
 WORKDIR "${EXEC_DIR}"
 ENV PLATFORM_ARCH "linux-${ARCH}"
-ENV GETH_VERSION 1.14.7-aa55f5ea
+ENV GETH_VERSION 1.14.8-a9523b64
 ENV GETH_ARCHIVE "geth-${PLATFORM_ARCH}-${GETH_VERSION}"
 RUN curl -LO "https://gethstore.blob.core.windows.net/builds/${GETH_ARCHIVE}.tar.gz"
 RUN tar -xvzf "${GETH_ARCHIVE}.tar.gz"
@@ -45,7 +45,7 @@ ENV PATH "${PATH}:${EXEC_DIR}"
 # Download prysm (consensus)
 RUN mkdir -p "${PRYSM_DIR}"
 WORKDIR "${PRYSM_DIR}"
-ENV PRYSM_VERSION v5.0.4
+ENV PRYSM_VERSION v5.1.0
 RUN if [ "$ARCH" = "amd64" ]; \
     then export PRYSM_PLATFORM_ARCH="modern-${PLATFORM_ARCH}"; \
     else export PRYSM_PLATFORM_ARCH="${PLATFORM_ARCH}"; \
@@ -70,7 +70,7 @@ WORKDIR "${EXTRA_DIR}"
 
 COPY ".${EXTRA_DIR_BASE}/prometheus.yml" .
 
-ENV MEV_VERSION 1.7
+ENV MEV_VERSION 1.8
 ENV MEV_ARCHIVE "mev-boost_${MEV_VERSION}_linux_${ARCH}"
 
 # ENV PROM_VERSION 2.44.0-rc.2
