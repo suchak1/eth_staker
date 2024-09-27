@@ -284,7 +284,8 @@ Resources:
         TaskDefinition: !Sub "${DeployEnv}_eth_staker"
   AutoScalingGroup:
     DependsOn: 
-      - ECSCluster
+      # is this dep needed?
+      # - ECSCluster
       - LaunchTemplate
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
