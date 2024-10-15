@@ -68,7 +68,7 @@ RUN bash download_checkpoint.sh
 RUN mkdir -p "${EXTRA_DIR}"
 WORKDIR "${EXTRA_DIR}"
 
-COPY ".${EXTRA_DIR_BASE}/prometheus.yml" .
+# COPY ".${EXTRA_DIR_BASE}/prometheus.yml" .
 
 ENV MEV_VERSION 1.8
 ENV MEV_ARCHIVE "mev-boost_${MEV_VERSION}_linux_${ARCH}"
