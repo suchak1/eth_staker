@@ -32,7 +32,7 @@ RUN python3 -m pip install boto3 requests rich
 RUN mkdir -p "${EXEC_DIR}"
 WORKDIR "${EXEC_DIR}"
 ENV PLATFORM_ARCH "linux-${ARCH}"
-ENV GETH_VERSION 1.14.12-293a300d
+ENV GETH_VERSION 1.14.13-eb00f169
 ENV GETH_ARCHIVE "geth-${PLATFORM_ARCH}-${GETH_VERSION}"
 RUN curl -LO "https://gethstore.blob.core.windows.net/builds/${GETH_ARCHIVE}.tar.gz"
 RUN tar -xvzf "${GETH_ARCHIVE}.tar.gz"
@@ -45,7 +45,7 @@ ENV PATH "${PATH}:${EXEC_DIR}"
 # Download prysm (consensus)
 RUN mkdir -p "${PRYSM_DIR}"
 WORKDIR "${PRYSM_DIR}"
-ENV PRYSM_VERSION v5.1.2
+ENV PRYSM_VERSION v5.2.0
 RUN if [ "$ARCH" = "amd64" ]; \
     then export PRYSM_PLATFORM_ARCH="modern-${PLATFORM_ARCH}"; \
     else export PRYSM_PLATFORM_ARCH="${PLATFORM_ARCH}"; \
